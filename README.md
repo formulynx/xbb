@@ -12,6 +12,13 @@ symlinks — there is no plugin manifest, so the command stays available as
 the bare `/xbb` and the subagent types stay unscoped as `xbb-researcher` /
 `xbb-coder`.
 
+## Why "xbb"?
+
+The name nods to Xu Bingbing, a character in Liu Cixin's sci-fi novel *The
+Three-Body Problem*, known for getting through the work of ten people. `xbb`
+fans a request out to many subagents in parallel, so it feels like ten
+people are on the job at once.
+
 ## Install
 
 ```sh
@@ -32,6 +39,24 @@ error.
 You can install into a different Claude config directory by setting
 `CLAUDE_DIR` before running the script, e.g. `CLAUDE_DIR=/path/to/dir
 xbb/install.sh`.
+
+## Usage
+
+Inside a Claude Code session, invoke:
+
+```
+/xbb [your request]
+```
+
+The request can be a research question, a coding task, or both mixed
+together — the skill classifies it automatically, fans it out to
+`xbb-researcher` / `xbb-coder` subagents, and reports back with verified
+findings or diffs. For example:
+
+```
+/xbb research the history of the Silk Road and summarize its major trade routes
+/xbb build a simple HTML mockup for a personal portfolio landing page
+```
 
 ## Update
 
