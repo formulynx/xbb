@@ -1,7 +1,6 @@
 ---
 name: xbb
 description: Orchestrator-style research & coding skill. The main agent stays a pure orchestrator, delegates all investigation to xbb-researcher and all implementation to xbb-coder subagents (sonnet/high), verifies their output, and returns the single best answer with supplementary notes. Use when the user invokes /xbb with a research request, a question, or an implementation task.
-disable-model-invocation: true
 argument-hint: [request]
 ---
 
