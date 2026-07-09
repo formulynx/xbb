@@ -24,7 +24,7 @@ people are on the job at once.
 ### Quick install (curl | bash via jsDelivr)
 
 ```sh
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@main/install.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.0/install.sh | bash
 ```
 
 This fetches `skills/xbb/SKILL.md`, `agents/xbb-researcher.md`, and
@@ -34,10 +34,11 @@ afterwards.
 
 Before piping a remote script into `bash`, it's good practice to inspect it
 first: `curl -fsSL <same-url> -o install.sh && less install.sh && bash
-install.sh`. Also consider pinning the ref to a released tag or commit
-instead of `@main` (e.g. `@v1.0.0`) for reproducible installs — jsDelivr
-caches moving refs like a branch for ~12h, but tags/commits are cached
-effectively forever.
+install.sh`. The one-liner above is pinned to a released tag (`@v0.1.0`) so
+installs stay reproducible — jsDelivr caches tags/commits effectively
+forever. Each release updates this README to point at the new tag; if you
+want the latest in-development code instead, substitute `@main` (a moving
+ref, cached by jsDelivr for ~12h).
 
 ### git clone (for development / contributors)
 
@@ -81,11 +82,13 @@ findings or diffs. For example:
 
 ## Update
 
-If you installed via curl | bash, just re-run the one-liner — it overwrites
-the existing copies:
+If you installed via curl | bash, re-running the same pinned one-liner just
+reinstalls the same `v0.1.0` copies — it does not fetch newer code. To
+upgrade, run the one-liner for the newer release tag (swap `@v0.1.0` for the
+new tag), or use `@main` for the latest in-development version:
 
 ```sh
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@main/install.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.0/install.sh | bash
 ```
 
 If you installed via git clone, pull the repo instead:
@@ -105,7 +108,7 @@ xbb/install.sh --uninstall
 
 (or, if installed via curl | bash without keeping the script around, fetch
 it again first: `curl -fsSL
-https://cdn.jsdelivr.net/gh/formulynx/xbb@main/install.sh | bash -s --
+https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.0/install.sh | bash -s --
 --uninstall`). This works for both the symlink and copy install methods.
 
 Alternatively, remove the three paths manually (`~/.claude/skills/xbb` is a

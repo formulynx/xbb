@@ -12,7 +12,7 @@ set -euo pipefail
 
 OWNER=formulynx
 REPO=xbb
-REF="${XBB_REF:-main}"
+REF="${XBB_REF:-v0.1.0}"
 BASE_URL="${XBB_BASE_URL:-https://cdn.jsdelivr.net/gh/$OWNER/$REPO@$REF}"
 
 main() {
