@@ -21,6 +21,16 @@ people are on the job at once.
 
 ## Install
 
+Pick the installer for your shell:
+
+- **macOS / Linux / WSL / Git Bash** (any POSIX shell) → `install.sh` (below).
+- **Native Windows** (PowerShell or cmd, no POSIX shell) → `install.ps1`
+  ([PowerShell install](#powershell-install-native-windows)).
+
+On Git Bash, prefer `install.sh`'s curl | bash method — it *copies* the files,
+whereas its git-clone method relies on symlinks (`ln -s`), which Git Bash does
+not create reliably. WSL has no such caveat. `install.ps1` always copies.
+
 ### Quick install (curl | bash via jsDelivr)
 
 ```sh
@@ -61,6 +71,30 @@ method copies files and overwrites its own prior copies freely.)
 You can install into a different Claude config directory by setting
 `CLAUDE_DIR` before running the script, e.g. `CLAUDE_DIR=/path/to/dir
 xbb/install.sh`.
+
+### PowerShell install (native Windows)
+
+For native Windows without a POSIX shell, use the PowerShell installer. Quick
+install:
+
+```powershell
+irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.0/install.ps1 | iex
+```
+
+Or from a git clone:
+
+```powershell
+.\xbb\install.ps1
+```
+
+`install.ps1` mirrors `install.sh` — same three payload files into
+`~\.claude\` — but always **copies** (no symlinks; those need admin/Developer
+Mode on Windows). It's idempotent and honours the same `CLAUDE_DIR`, `XBB_REF`,
+and `XBB_BASE_URL` environment variables. To inspect before running, download
+first: `irm <same-url> -OutFile install.ps1; notepad install.ps1; .\install.ps1`.
+
+If PowerShell blocks the script with an execution-policy error, run it for the
+current process only: `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
 
 ## Usage
 
@@ -110,6 +144,13 @@ xbb/install.sh --uninstall
 it again first: `curl -fsSL
 https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.0/install.sh | bash -s --
 --uninstall`). This works for both the symlink and copy install methods.
+
+On native Windows, download `install.ps1` and run it with `-Uninstall`:
+
+```powershell
+irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Uninstall
+```
 
 Alternatively, remove the three paths manually (`~/.claude/skills/xbb` is a
 symlink if you installed via git clone, or a real directory if you
