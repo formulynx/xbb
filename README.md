@@ -114,6 +114,27 @@ findings or diffs. For example:
 /xbb build a simple HTML mockup for a personal portfolio landing page
 ```
 
+### Housekeeping: `/xbb clean`
+
+Each run writes its subagent hand-off files to a per-run temp directory
+(`$TMPDIR/xbb-run-<id>/`, or the equivalent temp root on Linux/Windows) and
+never deletes them — they're a small audit trail of what past runs
+investigated, and normal runs do no cleanup (zero overhead). Your OS's temp
+reaper clears them eventually, so you can ignore this entirely if you don't
+mind the disk use.
+
+To trim them yourself, run:
+
+```
+/xbb clean
+```
+
+It lists the leftover run directories with their sizes and total, then asks
+before deleting anything — pick **Delete all** to reclaim the space or
+**Keep** to leave them to the OS. It only ever touches `xbb-run-*`
+directories. Works on macOS/Linux (and Windows Git Bash) as well as native
+Windows PowerShell.
+
 ## Update
 
 If you installed via curl | bash, re-running the same pinned one-liner just
