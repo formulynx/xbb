@@ -45,8 +45,13 @@ main() {
     return
   fi
 
-  local repo_dir
-  repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]:-}")" 2>/dev/null && pwd || true)"
+  # Clone mode only when invoked as a real script file. When piped
+  # (curl|bash / `bash < install.sh`), BASH_SOURCE is unset — force remote mode
+  # rather than letting dirname "" collapse to the current directory.
+  local repo_dir=""
+  if [ -f "${BASH_SOURCE[0]:-}" ]; then
+    repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  fi
 
   mkdir -p "$skills_dir" "$agents_dir"
 
