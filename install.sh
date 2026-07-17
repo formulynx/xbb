@@ -60,17 +60,29 @@ main() {
   if [ -n "$repo_dir" ] && [ -f "$repo_dir/skills/xbb/SKILL.md" ]; then
     # Clone mode: symlink from the local repo. Preserve existing guards.
     if [ -e "$skill_link" ] && [ ! -L "$skill_link" ]; then
-      echo "Refusing to overwrite existing directory: $skill_link" >&2
-      echo "Back it up or remove it, then re-run this installer." >&2
-      exit 1
+      # A prior remote-mode install leaves a real dir containing just our
+      # own SKILL.md. Recognize and replace it; refuse anything else.
+      if [ -d "$skill_link" ] && [ "$(ls -A "$skill_link" 2>/dev/null)" = "SKILL.md" ] \
+        && grep -q '^name: xbb$' "$skill_link/SKILL.md" 2>/dev/null; then
+        rm -rf "$skill_link"
+      else
+        echo "Refusing to overwrite existing directory: $skill_link" >&2
+        echo "Back it up or remove it, then re-run this installer." >&2
+        exit 1
+      fi
     fi
 
     for name in xbb-researcher xbb-coder xbb-reviewer; do
       local agent_link="$agents_dir/$name.md"
       if [ -e "$agent_link" ] && [ ! -L "$agent_link" ]; then
-        echo "Refusing to overwrite existing file: $agent_link" >&2
-        echo "Back it up or remove it, then re-run this installer." >&2
-        exit 1
+        # Same recognize-and-replace for a prior remote-mode agent file.
+        if grep -q "^name: $name$" "$agent_link" 2>/dev/null; then
+          rm -f "$agent_link"
+        else
+          echo "Refusing to overwrite existing file: $agent_link" >&2
+          echo "Back it up or remove it, then re-run this installer." >&2
+          exit 1
+        fi
       fi
     done
 
