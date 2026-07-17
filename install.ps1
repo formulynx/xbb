@@ -5,7 +5,7 @@
 #   - Clone mode: run from a local git clone (.\install.ps1) -> copies the
 #     payload files from the repo into $CLAUDE_DIR.
 #   - Remote mode: piped via `irm <url> | iex` with no local clone -> fetches
-#     the 3 payload files from jsDelivr and copies them into $CLAUDE_DIR.
+#     the 4 payload files from jsDelivr and copies them into $CLAUDE_DIR.
 #
 # On Windows this always COPIES (never symlinks): ln-style symlinks need admin
 # or Developer Mode and are unreliable, so copy is the safe default - unlike
@@ -34,6 +34,7 @@ $Payload = @(
   @{ Src = 'skills/xbb/SKILL.md';      Dest = (Join-Path $SkillDir  'SKILL.md') }
   @{ Src = 'agents/xbb-researcher.md'; Dest = (Join-Path $AgentsDir 'xbb-researcher.md') }
   @{ Src = 'agents/xbb-coder.md';      Dest = (Join-Path $AgentsDir 'xbb-coder.md') }
+  @{ Src = 'agents/xbb-reviewer.md';   Dest = (Join-Path $AgentsDir 'xbb-reviewer.md') }
 )
 
 if ($Uninstall) {

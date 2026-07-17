@@ -5,7 +5,7 @@
 #   - Clone mode: run from a local git clone (./install.sh) -> symlinks the
 #     payload files from the repo into $CLAUDE_DIR.
 #   - Remote mode: piped via curl|bash with no local clone -> fetches the
-#     3 payload files from jsDelivr and copies them into $CLAUDE_DIR.
+#     4 payload files from jsDelivr and copies them into $CLAUDE_DIR.
 #
 # Re-running is safe (idempotent). Supports --uninstall.
 set -euo pipefail
@@ -26,15 +26,17 @@ main() {
     "skills/xbb/SKILL.md"
     "agents/xbb-researcher.md"
     "agents/xbb-coder.md"
+    "agents/xbb-reviewer.md"
   )
   local dests=(
     "$skill_link/SKILL.md"
     "$agents_dir/xbb-researcher.md"
     "$agents_dir/xbb-coder.md"
+    "$agents_dir/xbb-reviewer.md"
   )
 
   if [ "${1:-}" = "--uninstall" ]; then
-    rm -f "$agents_dir/xbb-researcher.md" "$agents_dir/xbb-coder.md"
+    rm -f "$agents_dir/xbb-researcher.md" "$agents_dir/xbb-coder.md" "$agents_dir/xbb-reviewer.md"
     if [ -L "$skill_link" ]; then
       rm -f "$skill_link"
     else
@@ -63,7 +65,7 @@ main() {
       exit 1
     fi
 
-    for name in xbb-researcher xbb-coder; do
+    for name in xbb-researcher xbb-coder xbb-reviewer; do
       local agent_link="$agents_dir/$name.md"
       if [ -e "$agent_link" ] && [ ! -L "$agent_link" ]; then
         echo "Refusing to overwrite existing file: $agent_link" >&2
@@ -75,6 +77,7 @@ main() {
     ln -sfn "$repo_dir/skills/xbb" "$skill_link"
     ln -sf "$repo_dir/agents/xbb-researcher.md" "$agents_dir/xbb-researcher.md"
     ln -sf "$repo_dir/agents/xbb-coder.md" "$agents_dir/xbb-coder.md"
+    ln -sf "$repo_dir/agents/xbb-reviewer.md" "$agents_dir/xbb-reviewer.md"
   else
     # Remote mode: fetch the payload files and copy them into place.
     if ! command -v curl >/dev/null 2>&1; then
