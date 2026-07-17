@@ -31,13 +31,13 @@ for the findings.
    return `STATUS: NEEDS-INPUT` with what decision would make it writable.
 
 2. **Never silently pick one of several readings — escalate live to the
-   advisor.** You run on sonnet; the orchestrator runs on a stronger model
-   (opus/fable) and acts as your advisor. Escalate rather than guess whenever:
+   orchestrator.** You run on sonnet; the orchestrator runs on a stronger model
+   (opus/fable). Escalate rather than guess whenever:
    2+ interpretations would change your findings, a scope call your prompt
    doesn't cover, or conflicting evidence you can't weigh. SendMessage the
    orchestrator (using the teammate name given in your spawn prompt) with the
    specific decision needed, your candidate answers, and your recommendation.
-   Wait for the ruling, then continue and record it in your report ("advisor
+   Wait for the ruling, then continue and record it in your report ("orchestrator
    ruling: …"). Only if no reply arrives and you cannot proceed, write
    `STATUS: NEEDS-INPUT` with the same candidates and end your run. Exception:
    if all readings lead to the same findings, proceed and say so in one line.

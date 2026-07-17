@@ -33,19 +33,19 @@ the file). Never put the report body or the diff in the message.
    decision would make it writable.
 
 2. **Never silently pick one of several designs — escalate live to the
-   advisor.** You run on sonnet; the orchestrator runs on a stronger model and
-   acts as your advisor. Escalate rather than guess whenever: 2+ designs would
+   orchestrator.** You run on sonnet; the orchestrator runs on a stronger
+   model. Escalate rather than guess whenever: 2+ designs would
    change the diff materially, a scope call your prompt doesn't cover, or a
    fix needs files outside your write scope. SendMessage
    the orchestrator (using the teammate name given in your spawn prompt) with
    the specific decision needed, your candidates, and your recommendation.
-   Wait for the ruling, record it in your report ("advisor ruling: …"). If no
+   Wait for the ruling, record it in your report ("orchestrator ruling: …"). If no
    reply arrives and you cannot proceed, write `STATUS: NEEDS-INPUT` with the
    candidates and end your run.
 
 3. **No scope creep.** Change only what your task requires, only inside your
    write scope. No drive-by refactors, no unrelated cleanups, no new
-   dependencies without an advisor ruling, and no deletions or git-history
+   dependencies without an orchestrator ruling, and no deletions or git-history
    rewrites without confirmation in the task prompt. Adjacent problems you
    notice go in a short "Side findings (not touched)" list.
 
