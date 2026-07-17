@@ -10,7 +10,7 @@ a single synthesized answer.
 This repo is distributed as a plain skill + agent files, installed via
 symlinks — there is no plugin manifest, so the command stays available as
 the bare `/xbb` and the subagent types stay unscoped as `xbb-researcher` /
-`xbb-coder`.
+`xbb-coder` / `xbb-reviewer`.
 
 ## Why "xbb"?
 
@@ -37,10 +37,10 @@ not create reliably. WSL has no such caveat. `install.ps1` always copies.
 curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.1/install.sh | bash
 ```
 
-This fetches `skills/xbb/SKILL.md`, `agents/xbb-researcher.md`, and
-`agents/xbb-coder.md` from jsDelivr's GitHub CDN and copies them into
-`~/.claude/`. No local clone is created. Restart your Claude Code session
-afterwards.
+This fetches `skills/xbb/SKILL.md`, `agents/xbb-researcher.md`,
+`agents/xbb-coder.md`, and `agents/xbb-reviewer.md` from jsDelivr's GitHub
+CDN and copies them into `~/.claude/`. No local clone is created. Restart
+your Claude Code session afterwards.
 
 Before piping a remote script into `bash`, it's good practice to inspect it
 first: `curl -fsSL <same-url> -o install.sh && less install.sh && bash
@@ -58,12 +58,13 @@ xbb/install.sh
 ```
 
 This symlinks `skills/xbb` and `agents/xbb-researcher.md` /
-`agents/xbb-coder.md` from the clone into `~/.claude/`. Restart your Claude
-Code session afterwards.
+`agents/xbb-coder.md` / `agents/xbb-reviewer.md` from the clone into
+`~/.claude/`. Restart your Claude Code session afterwards.
 
 If `~/.claude/skills/xbb` or `~/.claude/agents/xbb-researcher.md` /
-`xbb-coder.md` already exist as real files (not symlinks) — e.g. from a
-previous manual install — back them up or remove them before running
+`xbb-coder.md` / `xbb-reviewer.md` already exist as real files (not
+symlinks) — e.g. from a previous manual install — back them up or remove
+them before running
 `install.sh`; it will refuse to overwrite real files and exit with an
 error. (This guard only applies to the clone/symlink method; the curl|bash
 method copies files and overwrites its own prior copies freely.)
@@ -87,7 +88,7 @@ Or from a git clone:
 .\xbb\install.ps1
 ```
 
-`install.ps1` mirrors `install.sh` — same three payload files into
+`install.ps1` mirrors `install.sh` — same four payload files into
 `~\.claude\` — but always **copies** (no symlinks; those need admin/Developer
 Mode on Windows). It's idempotent and honours the same `CLAUDE_DIR`, `XBB_REF`,
 and `XBB_BASE_URL` environment variables. To inspect before running, download
@@ -135,6 +136,107 @@ before deleting anything — pick **Delete all** to reclaim the space or
 directories. Works on macOS/Linux (and Windows Git Bash) as well as native
 Windows PowerShell.
 
+### External review: `/xbb --wang <request>`
+
+```
+/xbb --wang [your request]
+```
+
+Runs the same orchestrated flow as a plain `/xbb` request, then adds an
+external review gate: once the teammates finish, a reviewer judges the
+resulting working tree against the **plan** — a plan file named in your
+request (e.g. "follow the plan in PLAN.md §3"), or, when none exists, a plan
+xbb writes down before delegating — plus your original request, and returns
+either `VERDICT: PASS` or `VERDICT: REVISE` with findings. It never sees the
+implementers' self-reports: this is blind review by design, so an inflated
+or hallucinated "done" claim can't sway the verdict, and the reviewer
+re-runs verification itself rather than trusting anyone else's. On
+`REVISE`, the orchestrator re-delegates fixes to teammates and loops back
+through review, up to `reviewMaxRounds` (default `8`, see `/xbb config`
+below). The loop keeps going automatically only while rounds make progress;
+if the same finding survives two consecutive rounds unresolved, xbb pauses
+and asks whether to continue, stop, or adjust course with guidance for the
+next round. Findings that turn out to be plan problems rather than
+implementation problems are escalated to you directly instead of burning
+rounds on re-fanout that can't fix them. The final answer reports the review
+outcome alongside the normal results.
+
+### Configuration: `/xbb config`
+
+```
+/xbb config
+```
+
+Opens an interactive settings menu (arrow-key selection). You can also set
+values directly on the command line:
+
+```
+/xbb config reviewer=codex codex.model=gpt-5.6-terra codex.effort=medium
+```
+
+Settings live in `~/.xbb/config.json`, created on first use with the
+defaults below, and survive reinstalling or updating xbb:
+
+```json
+{
+  "reviewer": "fable",
+  "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300 },
+  "maxConcurrentAgents": 4,
+  "reviewMaxRounds": 8
+}
+```
+
+- `reviewer` — who judges `/xbb --wang` rounds. `fable` (default), `opus`,
+  or `sonnet` spawn a Claude reviewer subagent (`agents/xbb-reviewer.md`),
+  with the model chosen at spawn time. `codex` instead spawns an external
+  OpenAI Codex CLI session reached over agmsg — see prerequisites below.
+- `codex.model` / `codex.effort` — model and reasoning effort passed to the
+  Codex CLI session when `reviewer=codex`.
+- `codex.pingTimeoutSec` / `codex.replyTimeoutSec` — how long to wait for
+  the Codex session to acknowledge a round, or return a verdict, before
+  treating it as unresponsive.
+- `maxConcurrentAgents` — cap on subagents running in parallel.
+- `reviewMaxRounds` — cap on `/xbb --wang` review/fix loops before giving up
+  and reporting the review as incomplete.
+
+#### Codex reviewer prerequisites
+
+Selecting `reviewer=codex` in `/xbb config` checks, once, that both of these
+are in place, refusing the config change with setup instructions if either
+is missing:
+
+- The Codex CLI: `npm install -g @openai/codex`, then `codex login`. (This
+  is the **scoped** `@openai/codex` package — the unscoped `codex` package
+  on npm is an unrelated project.)
+- agmsg, the messaging bridge to the Codex session: `/plugin marketplace add
+  fujibee/agmsg` + `/plugin install agmsg@fujibee-agmsg`, or agmsg's own
+  `install.sh`.
+
+At review time, the Codex reviewer is spawned per round with `--sandbox
+read-only` and the configured model/effort; its replies travel over agmsg
+messages. If it stops answering partway through (rate limit, API error —
+the two are indistinguishable from outside), the run aborts the review
+loop, keeps all work completed so far, and reports the review as incomplete
+with next steps, rather than retrying indefinitely.
+
+**Terminal behavior for the codex reviewer**: inside cmux, it opens as a
+split surface in the current workspace (auto-detected via
+`CMUX_SOCKET_PATH`; a helper script, `~/.xbb/cmux-spawn-split.sh`, is
+generated on first use); inside tmux, a new pane; otherwise a new OS
+terminal window per review round. Outside cmux/tmux, these windows are not
+auto-closed — a known limitation.
+
+#### Files created at runtime
+
+xbb writes a few files under `~/.xbb/` as needed, none of which are part of
+the installer payload or touched by `--uninstall`:
+
+- `config.json` — settings, see [Configuration](#configuration-xbb-config).
+- `spawn_options.yaml`, `cmux-spawn-split.sh`, `last-reviewer-surface` —
+  support files for spawning and locating the codex reviewer's terminal.
+
+To remove them (settings included), run `rm -rf ~/.xbb`.
+
 ## Update
 
 If you installed via curl | bash, re-running the same pinned one-liner just
@@ -152,8 +254,10 @@ If you installed via git clone, pull the repo instead:
 git -C xbb pull
 ```
 
-`SKILL.md` changes take effect immediately (next `/xbb` invocation).
-Changes to the agent files take effect on your next Claude Code session.
+`SKILL.md` changes take effect immediately (next `/xbb` invocation). New or
+changed agent files (e.g. `xbb-reviewer.md`) are loaded at session start, so
+start a new Claude Code session after installing or updating to pick them
+up.
 
 ## Uninstall
 
@@ -173,7 +277,7 @@ irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.1/install.ps1 -OutFile instal
 .\install.ps1 -Uninstall
 ```
 
-Alternatively, remove the three paths manually (`~/.claude/skills/xbb` is a
+Alternatively, remove the four paths manually (`~/.claude/skills/xbb` is a
 symlink if you installed via git clone, or a real directory if you
 installed via curl | bash, hence `-rf`):
 
@@ -181,4 +285,10 @@ installed via curl | bash, hence `-rf`):
 rm -rf ~/.claude/skills/xbb
 rm ~/.claude/agents/xbb-researcher.md
 rm ~/.claude/agents/xbb-coder.md
+rm ~/.claude/agents/xbb-reviewer.md
 ```
+
+None of the above touches `~/.xbb/` (config and other runtime files — see
+[Files created at runtime](#files-created-at-runtime)); the uninstaller
+intentionally leaves it so your settings survive reinstalls. To remove
+settings too: `rm -rf ~/.xbb`.
