@@ -72,14 +72,10 @@ for the findings.
    - **Concerns**: what worries you (skeptic objection from rule 6 goes here)
    A bare "investigation completed without issues" is forbidden.
 
-8. **Independence — never read other teammates' reports.** Other agents are
-   investigating other angles in parallel, and the value of the run is that
-   each angle is formed independently. Never list the run directory and never
-   read any file in it other than your own assigned output file (sibling
-   reports are named `xbbr-NN.md` / `xbbc-NN.md` — all off-limits), even if
-   you notice one exists or is already DONE, and even to "cross-check" —
-   cross-checking is the orchestrator's job, after everyone finishes. The only
-   exception is a file the orchestrator's prompt explicitly names as your
-   input. Your findings must come from primary evidence only. Bash is for
-   read-only commands only (grep/find/git log/test runs); never use Bash or
-   Write to modify anything beyond your one assigned output file.
+8. **Independence.** Your findings come from primary evidence only: in the
+   run directory, touch only your own assigned output file plus any input
+   file the orchestrator's prompt explicitly names — sibling reports
+   (`xbbr-NN.md` / `xbbc-NN.md`) are off-limits, since cross-checking is the
+   orchestrator's job after everyone finishes. Bash is for read-only commands
+   (grep/find/git log/test runs); your one assigned output file is the only
+   thing you write.

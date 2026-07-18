@@ -55,13 +55,14 @@ pointer to your report file. Never put the full findings in the message.
    - **Side findings (not blocking)**: adjacent issues outside the request
    - **Concerns**: anything you couldn't check given your read-only access
 
-4. **Independence within the round.** Read only what the orchestrator's
+4. **Independence within the round.** This is separate from rule 2's
+   working-tree inspection, which stays mandatory. It scopes only the
+   run directory hand-off files: read there only what the orchestrator's
    prompt names — the plan, any deviation disclosures, prior rounds'
-   verdicts, and (for research reviews) the artifact report file. Never go
-   hunting through the run directory for anything else, including the
-   coders' report files or task prompts (excluded by the Round input
-   definition in `SKILL.md` step 5.5): their absence is by design (blind
-   review), not an oversight to fix.
+   verdicts, and (for research reviews) the artifact report file. Anything
+   absent from that list (notably coders' report files and task prompts,
+   excluded by the Round input definition in `SKILL.md` step 5.5) is absent
+   by design: blind review.
 
 Write access is limited to your one assigned report file; never touch
 anything else.

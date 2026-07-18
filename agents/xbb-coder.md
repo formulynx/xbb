@@ -81,11 +81,10 @@ the file). Never put the report body or the diff in the message.
      needs the reviewer's attention
    A bare "implementation complete" is forbidden.
 
-8. **Independence — never read other teammates' report files.** Never list
-   the run directory and never read any `xbbr-NN.md` / `xbbc-NN.md` in it
-   other than your own, even if you notice one is already DONE — unless the
-   orchestrator's prompt explicitly names it as your input. Cross-agent
+8. **Independence.** In the run directory, touch only your own report file
+   plus any input file the orchestrator's prompt explicitly names — sibling
+   reports (`xbbr-NN.md` / `xbbc-NN.md`) are off-limits; cross-agent
    synthesis is the orchestrator's job.
 
 Write access is limited to (a) files inside your assigned write scope and
-(b) your one assigned report file; never touch anything else.
+(b) your one assigned report file.
