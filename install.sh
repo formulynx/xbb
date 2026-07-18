@@ -5,7 +5,7 @@
 #   - Clone mode: run from a local git clone (./install.sh) -> symlinks the
 #     payload files from the repo into $CLAUDE_DIR.
 #   - Remote mode: piped via curl|bash with no local clone -> fetches the
-#     4 payload files from jsDelivr and copies them into $CLAUDE_DIR.
+#     payload files from jsDelivr and copies them into $CLAUDE_DIR.
 #
 # Re-running is safe (idempotent). Supports --uninstall.
 set -euo pipefail
@@ -24,12 +24,16 @@ main() {
   # Payload: src-relative-path -> dest-path
   local srcs=(
     "skills/xbb/SKILL.md"
+    "skills/xbb/scripts/reviewer-cleanup.sh"
+    "skills/xbb/scripts/cmux-spawn-split.sh"
     "agents/xbb-researcher.md"
     "agents/xbb-coder.md"
     "agents/xbb-reviewer.md"
   )
   local dests=(
     "$skill_link/SKILL.md"
+    "$skill_link/scripts/reviewer-cleanup.sh"
+    "$skill_link/scripts/cmux-spawn-split.sh"
     "$agents_dir/xbb-researcher.md"
     "$agents_dir/xbb-coder.md"
     "$agents_dir/xbb-reviewer.md"
@@ -40,6 +44,7 @@ main() {
     if [ -L "$skill_link" ]; then
       rm -f "$skill_link"
     else
+      rm -rf "$skill_link/scripts" 2>/dev/null || true
       rm -f "$skill_link/SKILL.md" 2>/dev/null || true
       rmdir "$skill_link" 2>/dev/null || true
     fi
@@ -60,9 +65,10 @@ main() {
   if [ -n "$repo_dir" ] && [ -f "$repo_dir/skills/xbb/SKILL.md" ]; then
     # Clone mode: symlink from the local repo. Preserve existing guards.
     if [ -e "$skill_link" ] && [ ! -L "$skill_link" ]; then
-      # A prior remote-mode install leaves a real dir containing just our
-      # own SKILL.md. Recognize and replace it; refuse anything else.
-      if [ -d "$skill_link" ] && [ "$(ls -A "$skill_link" 2>/dev/null)" = "SKILL.md" ] \
+      # A prior remote-mode install leaves a real dir containing our own
+      # SKILL.md (plus scripts/, once shipped). Recognize and replace it;
+      # refuse anything else.
+      if [ -f "$skill_link/SKILL.md" ] \
         && grep -q '^name: xbb$' "$skill_link/SKILL.md" 2>/dev/null; then
         rm -rf "$skill_link"
       else
@@ -112,6 +118,7 @@ main() {
       if [ -L "$dest" ]; then
         rm -f "$dest"
       fi
+      mkdir -p "$(dirname "$dest")"
       fetch "$BASE_URL/$src" "$dest"
     done
   fi

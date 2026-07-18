@@ -62,27 +62,33 @@ Lazy-created by whichever mode reads it first: if missing, `mkdir -p ~/.xbb` and
 
    - **Claude reviewer path** (`reviewer` is `fable` / `opus` / `sonnet`). Per round, spawn a teammate named `xbbrv-NN` (round number; continues the xbbr/xbbc naming convention) of agent type `xbb-reviewer`, overriding its model at spawn time to the configured `reviewer` (the agent file deliberately carries no `model` key, for exactly this reason). Prompt it with the round input defined above (the plan file's absolute path, or the research report file(s) when the artifact under review is research, plus the original request verbatim, any deviation disclosures, and prior-round verdicts — never a coder's report file or task prompt), its own report file path `xbbrv-NN.md`, the Reviewer policy above, the VERDICT protocol above, and your teammate name for its STATUS/VERDICT message. It inspects the working tree itself (git diff, tests, etc.) — you do not hand it a diff. Reviewer teammates are included in the step-6 shutdown like any other.
    - **Codex reviewer path** (`reviewer` is `codex`), via [agmsg](https://github.com/fujibee/agmsg):
-     - **Preflight** (cheap, every round): `~/.agents/skills/agmsg` exists — bootstrap it the same way as `config` mode's codex preflight if only the plugin cache is present. Register on the team: `bash ~/.agents/skills/agmsg/scripts/whoami.sh "$(pwd)" claude-code`; if it reports `not_joined`, `bash ~/.agents/skills/agmsg/scripts/join.sh xbb team-lead claude-code "$(pwd)"` (team name `xbb`; reuse a team `whoami` already reports for this project instead of joining a new one).
+     - **Preflight** (cheap, every round): `~/.agents/skills/agmsg` exists — bootstrap it the same way as `config` mode's codex preflight if only the plugin cache is present. Register on the team:
+       ```bash
+       bash ~/.agents/skills/agmsg/scripts/whoami.sh "$(pwd)" claude-code
+       ```
+       If it reports `not_joined`:
+       ```bash
+       bash ~/.agents/skills/agmsg/scripts/join.sh xbb team-lead claude-code "$(pwd)"
+       ```
+       (team name `xbb`; reuse a team `whoami` already reports for this project instead of joining a new one).
      - **Spawn options**, regenerated every run from config, written to `~/.xbb/spawn_options.yaml`:
        ```yaml
        codex:
          --sandbox: read-only
          -c: model_reasoning_effort=<config.codex.effort>
        ```
-     - **cmux detection**: if `$CMUX_SOCKET_PATH` is set, lazy-create an executable `~/.xbb/cmux-spawn-split.sh` with exactly this content, and pass `--terminal "$HOME/.xbb/cmux-spawn-split.sh {cmd}"` to spawn (`{cmd}` stays unquoted in the template — agmsg `%q`-escapes it):
+     - **cmux detection**: if `$CMUX_SOCKET_PATH` is set, pass `--terminal "bash '<skill-dir>/scripts/cmux-spawn-split.sh' {cmd}"` to spawn — the script ships with this skill at `scripts/cmux-spawn-split.sh` (no need to author or lazy-create it); `<skill-dir>` is this invocation's own stated base directory for the skill (shown above the request each time `/xbb` runs); `{cmd}` stays unquoted in the template — agmsg `%q`-escapes it. First-live-use caveat: verify `cmux new-split`'s output format (`OK surface:N`) and `cmux send`'s newline handling the first time this actually runs against a live cmux.
+     - **Spawn**, per round N:
        ```bash
-       #!/usr/bin/env bash
-       # agmsg --terminal target: run the boot script in a new cmux surface (same workspace)
-       sid=$(cmux new-split down --focus false | awk '{print $2}')
-       printf '%s\n' "$sid" > "$HOME/.xbb/last-reviewer-surface"
-       cmux send --surface "$sid" "$1
-       "
+       AGMSG_SPAWN_OPTIONS_FILE="$HOME/.xbb/spawn_options.yaml" bash ~/.agents/skills/agmsg/scripts/spawn.sh codex xbb-reviewer --team xbb --model <config.codex.model> [--terminal ...] --boot-prompt "<text>"
        ```
-       First-live-use caveat: verify `cmux new-split`'s output format (`OK surface:N`) and `cmux send`'s newline handling the first time this actually runs against a live cmux.
-     - **Spawn**, per round N: `AGMSG_SPAWN_OPTIONS_FILE="$HOME/.xbb/spawn_options.yaml" bash ~/.agents/skills/agmsg/scripts/spawn.sh codex xbb-reviewer --team xbb --model <config.codex.model> [--terminal ...] --boot-prompt "<text>"`. The boot prompt instructs codex to: (1) immediately ACK via `bash ~/.agents/skills/agmsg/scripts/send.sh xbb xbb-reviewer team-lead "ACK round N"`; (2) review under the Reviewer policy above, inlined in full in the boot prompt (role: judge not director; no scope creep; read-only conduct; and — since codex has no mid-round channel back to the orchestrator — the ambiguity fallback: encode any genuine ambiguity as the REVISE finding itself rather than guessing), applied to the working tree at the project path plus the round input defined above inlined in the boot prompt (the plan file's absolute path, or the research report file(s) when the artifact under review is research, plus the original request verbatim, any neutralized deviation disclosures, and prior-round findings summarized) — never a coder's report file or task prompt; (3) send exactly one final message via `send.sh` whose first line is the VERDICT protocol line, followed by the Reviewer policy's reporting structure (VERDICT/Checked/Findings/Side findings/Concerns) with all findings inline in that same message — codex runs sandboxed read-only and cannot write a report file, so the entire verdict travels in the message.
-     - **Wait**: poll `bash ~/.agents/skills/agmsg/scripts/history.sh xbb` for the ACK (deadline `pingTimeoutSec`), then for the verdict message (deadline `replyTimeoutSec`) — grep only lines *from* `xbb-reviewer`, never your own sent text.
-     - **Timeout at either deadline aborts the review loop** (no fallback to another reviewer): kill the codex process (`pkill -f "codex .*actas xbb-reviewer"` or the equivalent pgrep+kill) and apply the Round cleanup below (surface close + marker deletion), state that the cause is indistinguishable from outside (rate limit, API error, crash), give next steps (`codex login status`, `/xbb config reviewer=fable`, retry later), and still deliver the teammates' completed work with the review marked incomplete — never discard finished work over a review timeout.
-     - **Round cleanup** (the one cleanup recipe — applies at timeout-abort above, before each re-spawn, and at run end via step 6): kill the previous codex PID; if `~/.xbb/last-reviewer-surface` exists, after the kill run `cmux close-surface --surface "$(cat ~/.xbb/last-reviewer-surface)"` to close the surface directly (a dedicated cmux command — do not send `"exit\n"` via `cmux send` and rely on the pane's shell happening to be sitting at an interactive prompt after the kill, which it may or may not be), then delete the marker file.
+       The boot prompt instructs codex to: (1) immediately ACK via `bash ~/.agents/skills/agmsg/scripts/send.sh xbb xbb-reviewer team-lead "ACK round N"`; (2) review under the Reviewer policy above, inlined in full in the boot prompt (role: judge not director; no scope creep; read-only conduct; and — since codex has no mid-round channel back to the orchestrator — the ambiguity fallback: encode any genuine ambiguity as the REVISE finding itself rather than guessing), applied to the working tree at the project path plus the round input defined above inlined in the boot prompt (the plan file's absolute path, or the research report file(s) when the artifact under review is research, plus the original request verbatim, any neutralized deviation disclosures, and prior-round findings summarized) — never a coder's report file or task prompt; (3) send exactly one final message via `send.sh` whose first line is the VERDICT protocol line, followed by the Reviewer policy's reporting structure (VERDICT/Checked/Findings/Side findings/Concerns) with all findings inline in that same message — codex runs sandboxed read-only and cannot write a report file, so the entire verdict travels in the message.
+     - **Wait**: poll for the ACK (deadline `pingTimeoutSec`), then for the verdict message (deadline `replyTimeoutSec`) — grep only lines *from* `xbb-reviewer`, never your own sent text:
+       ```bash
+       bash ~/.agents/skills/agmsg/scripts/history.sh xbb
+       ```
+     - **Timeout at either deadline aborts the review loop** (no fallback to another reviewer): apply the Round cleanup below (kill the codex process + pane/surface teardown), state that the cause is indistinguishable from outside (rate limit, API error, crash), give next steps (`codex login status`, `/xbb config reviewer=fable`, retry later), and still deliver the teammates' completed work with the review marked incomplete — never discard finished work over a review timeout.
+     - **Round cleanup** (the one cleanup recipe — applies at timeout-abort above, before each re-spawn, and at run end via step 6): run the script shipped with this skill, unconditionally — `bash "<skill-dir>/scripts/reviewer-cleanup.sh"` (`<skill-dir>` resolved the same way as cmux detection above; no need to author or lazy-create anything) — the branching (agmsg always prefers a tmux pane over any `--terminal` override whenever `$TMUX` is set, true both for plain tmux and for a tmux-backed cmux session, e.g. `cmux claude-teams`; see agmsg's `spawn.sh` header: `--terminal` only applies to "the non-tmux path") lives in the script, not in this prose, so there is nothing left to re-derive by hand at any of the three call sites.
 6. **Shut down & confirm (before answering).** Once step 5 verification is fully resolved (no further re-spawns pending) and every teammate has finished (DONE or abandoned), terminate every spawned teammate **before** writing the answer: send each `{"type": "shutdown_request", "reason": "xbb run complete"}` via SendMessage (a plain-text "stop" only idles it; the process stays alive). If one remains running, fall back to TaskStop with its name. Then wait until no spawned teammate is still running (e.g. TaskList reports none) — this drains their "Teammate … finished" termination notifications within this run so they do not leak into your next turn. Through a step-5.5 review gate, this shutdown happens only after that loop resolves (PASS, rounds exhausted, or an aborted codex review); a codex reviewer is killed per its round-cleanup above instead of being sent a shutdown_request.
 7. **Answer.** Respond in the language of the request.
    - **Fresh-eyes pass.** Before writing the answer, ask: what would a skeptical senior object to, and does the evidence answer it?
@@ -97,7 +103,7 @@ Lazy-created by whichever mode reads it first: if missing, `mkdir -p ~/.xbb` and
 ## Constraints
 
 - **Orchestrator**: read-only except for (a) the research output file(s) confirmed in step 2 and (b) the run directory of hand-off files, including creating it (`mkdir -p`, step 3). Running verification commands (tests/lint/build) in step 5 is permitted; writing or editing project code is not — implementation belongs to coders. Reading the minimum needed to scope the task before delegating is permitted. Never delete existing project files, never commit or push without the user asking, never touch other system state. Deleting `xbb-run-*` directories under the resolved temp root is permitted **only** in `clean` mode after explicit user confirmation (see below) — normal runs never delete anything.
-- **Wang/config carve-out**: in addition to the above, writing `~/.xbb/*` (config.json, spawn_options.yaml, the cmux wrapper script, the surface marker file), invoking agmsg scripts (`whoami.sh`/`join.sh`/`spawn.sh`/`send.sh`/`history.sh`), and killing the codex reviewer process it spawned are permitted. Everything else in the orchestrator's read/write boundary is unchanged.
+- **Wang/config carve-out**: in addition to the above, writing `~/.xbb/*` (config.json, spawn_options.yaml, the surface marker file), invoking agmsg scripts (`whoami.sh`/`join.sh`/`spawn.sh`/`send.sh`/`history.sh`/`despawn.sh`) and this skill's own shipped scripts (`scripts/cmux-spawn-split.sh`, `scripts/reviewer-cleanup.sh`), and killing the codex reviewer process it spawned are permitted. Everything else in the orchestrator's read/write boundary is unchanged.
 - Subagent read/write boundaries are defined in their agent files; the orchestrator owns scope assignment, overlap checks, and expansion.
 - Destructive operations (deleting existing files, rewriting git history) require explicit user confirmation regardless of who performs them.
 - Report only what a subagent's evidence or verification output supports; state explicitly what could not be confirmed.
@@ -109,7 +115,11 @@ Each run leaves its hand-off files under its run directory (`xbb-run-<id>/`, cre
 When `$ARGUMENTS` is `clean`, spawn no subagents and run only the steps below. **Pick the command recipe matching your shell** — POSIX (macOS/Linux, or Windows Git Bash) or PowerShell (native Windows without Git Bash). Select at the agent level from the shell you are actually running in; do **not** wrap the choice in a bash `if`, since that syntax will not parse under PowerShell.
 
 1. **Measure.** Resolve the temp root (same as step 3), confirm it non-empty before any glob (never run against an empty prefix), and list the leftover run directories with sizes plus a total and count. If none match, tell the user there's nothing to clean and stop.
-   - **POSIX:** `R="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}"; [ -n "$R" ] && { du -sh "$R"/xbb-run-*/ 2>/dev/null | sort -h; du -shc "$R"/xbb-run-*/ 2>/dev/null | tail -1; }`
+   - **POSIX:**
+     ```bash
+     R="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}"
+     [ -n "$R" ] && { du -sh "$R"/xbb-run-*/ 2>/dev/null | sort -h; du -shc "$R"/xbb-run-*/ 2>/dev/null | tail -1; }
+     ```
    - **PowerShell:**
      ```powershell
      $R = if ($env:TMPDIR) {$env:TMPDIR} elseif ($env:TEMP) {$env:TEMP} else {"C:\Temp"}
@@ -120,8 +130,14 @@ When `$ARGUMENTS` is `clean`, spawn no subagents and run only the steps below. *
 2. **Present.** Show the count, total size, and the per-directory list (name + size) so the user can eyeball what would be lost before deciding.
 3. **Ask.** Use AskUserQuestion with two options: **Delete all** (free the space) and **Keep** (leave them to the OS's temp cleanup). Do not default to deleting.
 4. **Act.** On *Delete all*, delete strictly the `xbb-run-*` entries under the resolved root (never anything else), then report freed space and how many were removed. On *Keep* or anything else: delete nothing and say so.
-   - **POSIX:** `rm -rf "$R"/xbb-run-*/`
-   - **PowerShell:** `Remove-Item -Path (Join-Path $R 'xbb-run-*') -Recurse -Force`
+   - **POSIX:**
+     ```bash
+     rm -rf "$R"/xbb-run-*/
+     ```
+   - **PowerShell:**
+     ```powershell
+     Remove-Item -Path (Join-Path $R 'xbb-run-*') -Recurse -Force
+     ```
 
 ## `config` mode (settings)
 
@@ -138,6 +154,10 @@ Reads and writes `~/.xbb/config.json` (see Config above; lazy-create if missing)
 3. **Codex preflight** — only when the *new* `reviewer` value is `codex`, run before saving, for either entry form above:
    - `command -v codex` and `codex --version` output matches `codex-cli X.Y.Z` (guards against the unrelated, unscoped npm `codex` package from 2012).
    - `codex login status` exits 0 (treat any non-zero exit as not logged in).
-   - agmsg present at `~/.agents/skills/agmsg/`; if absent but `~/.claude/plugins/cache/fujibee-agmsg/agmsg/*/install.sh` exists, bootstrap once via `bash "$(ls ~/.claude/plugins/cache/fujibee-agmsg/agmsg/*/install.sh | head -1)" --cmd agmsg`; if neither exists, fail this check.
+   - agmsg present at `~/.agents/skills/agmsg/`; if absent but `~/.claude/plugins/cache/fujibee-agmsg/agmsg/*/install.sh` exists, bootstrap once via:
+     ```bash
+     bash "$(ls ~/.claude/plugins/cache/fujibee-agmsg/agmsg/*/install.sh | head -1)" --cmd agmsg
+     ```
+     If neither exists, fail this check.
 
    On any failure: print the specific remediation (`npm install -g @openai/codex`, `codex login`, or `/plugin install agmsg@fujibee-agmsg`, matching the failed check) and do **not** save the config change — keep the previous `reviewer`. On success: write the config and confirm the new values to the user.
