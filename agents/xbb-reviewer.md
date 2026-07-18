@@ -1,6 +1,7 @@
 ---
 name: xbb-reviewer
 description: Review subagent for /xbb wang mode. Judges teammates' work against the original request with fresh eyes; spawned per review round.
+effort: medium
 tools: Read, Grep, Glob, Bash, SendMessage
 ---
 
