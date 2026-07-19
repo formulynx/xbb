@@ -177,10 +177,10 @@ not create reliably. WSL has no such caveat. `install.ps1` always copies.
 curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.7/install.sh | bash
 ```
 
-This fetches `skills/xbb/SKILL.md`, `agents/xbb-researcher.md`,
-`agents/xbb-coder.md`, and `agents/xbb-reviewer.md` from jsDelivr's GitHub
-CDN and copies them into `~/.claude/`. No local clone is created. Restart
-your Claude Code session afterwards.
+This fetches `skills/xbb/SKILL.md`, its `scripts/` helpers, and the three
+`agents/xbb-*.md` files from jsDelivr's GitHub CDN and copies them into
+`~/.claude/`. No local clone is created. Restart your Claude Code session
+afterwards.
 
 Before piping a remote script into `bash`, it's good practice to inspect it
 first: `curl -fsSL <same-url> -o install.sh && less install.sh && bash
@@ -228,9 +228,11 @@ Or from a git clone:
 .\xbb\install.ps1
 ```
 
-`install.ps1` mirrors `install.sh` — same four payload files into
-`~\.claude\` — but always **copies** (no symlinks; those need admin/Developer
-Mode on Windows). It's idempotent and honours the same `CLAUDE_DIR`, `XBB_REF`,
+`install.ps1` mirrors `install.sh`'s payload into `~\.claude\` — `SKILL.md`,
+the three agent files, and `team-guard.ps1` in place of `install.sh`'s
+POSIX-only scripts (the codex reviewer and cmux support they back don't
+apply on native Windows) — but always **copies** (no symlinks; those need
+admin/Developer Mode on Windows). It's idempotent and honours the same `CLAUDE_DIR`, `XBB_REF`,
 and `XBB_BASE_URL` environment variables. To inspect before running, download
 first: `irm <same-url> -OutFile install.ps1; notepad install.ps1; .\install.ps1`.
 
