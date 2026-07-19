@@ -124,21 +124,25 @@ with next steps, rather than retrying indefinitely.
 
 **Terminal behavior for the codex reviewer**: inside cmux, it opens as a
 split surface in the current workspace (auto-detected via
-`CMUX_SOCKET_PATH`; a helper script, `~/.xbb/cmux-spawn-split.sh`, is
-generated on first use); inside tmux, a new pane; otherwise a new OS
+`CMUX_SOCKET_PATH`, via a helper script that ships with the skill install,
+`scripts/cmux-spawn-split.sh`); inside tmux, a new pane; otherwise a new OS
 terminal window per review round. Outside cmux/tmux, these windows are not
 auto-closed — a known limitation.
 
 #### Files created at runtime
 
-xbb writes a few files under `~/.xbb/` as needed, none of which are part of
-the installer payload or touched by `--uninstall`:
+xbb writes one file under `~/.xbb/` as needed, not part of the installer
+payload or touched by `--uninstall`:
 
 - `config.json` — settings, see [Configuration](#configuration-xbb-config).
-- `spawn_options.yaml`, `cmux-spawn-split.sh`, `last-reviewer-surface` —
-  support files for spawning and locating the codex reviewer's terminal.
 
-To remove them (settings included), run `rm -rf ~/.xbb`.
+The codex reviewer's per-run spawn options, scratch cwd, and surface
+marker live under that run's own `$TMPDIR/xbb-run-<id>/` directory instead
+(see [Housekeeping](#housekeeping-xbb-clean)) — scoped per run so
+concurrent `/xbb --wang` runs never share, and therefore never race on,
+the same file.
+
+To remove `~/.xbb` (settings included), run `rm -rf ~/.xbb`.
 
 ### Housekeeping: `/xbb clean`
 
@@ -292,7 +296,7 @@ rm ~/.claude/agents/xbb-coder.md
 rm ~/.claude/agents/xbb-reviewer.md
 ```
 
-None of the above touches `~/.xbb/` (config and other runtime files — see
+None of the above touches `~/.xbb/` (config — see
 [Files created at runtime](#files-created-at-runtime)); the uninstaller
 intentionally leaves it so your settings survive reinstalls. To remove
 settings too: `rm -rf ~/.xbb`.
