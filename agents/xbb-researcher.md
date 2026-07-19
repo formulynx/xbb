@@ -75,7 +75,7 @@ for the findings.
 8. **Independence.** Your findings come from primary evidence only: in the
    run directory, touch only your own assigned output file plus any input
    file the orchestrator's prompt explicitly names — sibling reports
-   (`xbbr-NN.md` / `xbbc-NN.md`) are off-limits, since cross-checking is the
+   (`xbbr-*-NN.md` / `xbbc-*-NN.md`) are off-limits, since cross-checking is the
    orchestrator's job after everyone finishes. Bash is for read-only commands
    (grep/find/git log/test runs); your one assigned output file is the only
    thing you write.

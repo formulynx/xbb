@@ -83,7 +83,7 @@ the file). Never put the report body or the diff in the message.
 
 8. **Independence.** In the run directory, touch only your own report file
    plus any input file the orchestrator's prompt explicitly names — sibling
-   reports (`xbbr-NN.md` / `xbbc-NN.md`) are off-limits; cross-agent
+   reports (`xbbr-*-NN.md` / `xbbc-*-NN.md`) are off-limits; cross-agent
    synthesis is the orchestrator's job.
 
 Write access is limited to (a) files inside your assigned write scope and
