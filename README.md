@@ -114,7 +114,9 @@ is missing:
   `install.sh`.
 
 At review time, the Codex reviewer is spawned per round with `--sandbox
-read-only` and the configured model/effort; its replies travel over agmsg
+workspace-write` (scoped to a per-run scratch directory, never the reviewed
+project — `read-only` would also block its own `send.sh` call back to
+agmsg) and the configured model/effort; its replies travel over agmsg
 messages. If it stops answering partway through (rate limit, API error —
 the two are indistinguishable from outside), the run aborts the review
 loop, keeps all work completed so far, and reports the review as incomplete
