@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
-# xbb codex-reviewer cleanup: kill the process and close whatever pane/
-# surface hosted it, regardless of how it was placed. Idempotent -- safe to
-# call even when nothing is running.
+# xbb codex-reviewer cleanup: kill the codex reviewer's OS process and close
+# whatever pane/surface hosted it, regardless of how it was placed.
+# Idempotent -- safe to call even when nothing is running.
 #
-# Usage: reviewer-cleanup.sh <team>
+# Scope: the codex reviewer only. It runs as a plain OS process wired up via
+# agmsg, never as a Claude Code teammate, so it never appears in
+# ~/.claude/teams/*/config.json and TaskStop cannot touch it -- that's the
+# entire reason this is a bash script instead of a tool call. Claude-native
+# teammates (researchers/coders/the xbb-reviewer *agent*) are a completely
+# different lifecycle: they're stopped via the TaskStop tool, with
+# team-guard.sh (this directory) locating which ones to stop.
+#
+# Usage: codex-reviewer-cleanup.sh <team>
 #
 # <team> must be the exact team name SKILL.md's "Team scope" step computes
 # for this run (e.g. xbb-<basename>-<checksum>-<rundir>, scoped to both the
@@ -12,7 +20,7 @@
 # "actas xbb-reviewer" would kill a DIFFERENT project's live reviewer
 # process. Scoping on <team> via the reviewer's own --cd path (unique per
 # project, guaranteed to appear verbatim in `ps`) avoids that.
-TEAM="${1:?Usage: reviewer-cleanup.sh <team>}"
+TEAM="${1:?Usage: codex-reviewer-cleanup.sh <team>}"
 
 pkill -f "codex .*--cd $HOME/.xbb/$TEAM " 2>/dev/null || true
 

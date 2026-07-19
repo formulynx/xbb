@@ -24,16 +24,20 @@ main() {
   # Payload: src-relative-path -> dest-path
   local srcs=(
     "skills/xbb/SKILL.md"
-    "skills/xbb/scripts/reviewer-cleanup.sh"
+    "skills/xbb/scripts/codex-reviewer-cleanup.sh"
     "skills/xbb/scripts/cmux-spawn-split.sh"
+    "skills/xbb/scripts/team-guard.sh"
+    "skills/xbb/scripts/team-guard.ps1"
     "agents/xbb-researcher.md"
     "agents/xbb-coder.md"
     "agents/xbb-reviewer.md"
   )
   local dests=(
     "$skill_link/SKILL.md"
-    "$skill_link/scripts/reviewer-cleanup.sh"
+    "$skill_link/scripts/codex-reviewer-cleanup.sh"
     "$skill_link/scripts/cmux-spawn-split.sh"
+    "$skill_link/scripts/team-guard.sh"
+    "$skill_link/scripts/team-guard.ps1"
     "$agents_dir/xbb-researcher.md"
     "$agents_dir/xbb-coder.md"
     "$agents_dir/xbb-reviewer.md"
