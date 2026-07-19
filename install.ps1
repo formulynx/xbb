@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 
 $Owner   = 'formulynx'
 $Repo    = 'xbb'
-$Ref     = if ($env:XBB_REF)      { $env:XBB_REF }      else { 'v0.1.4' }
+$Ref     = if ($env:XBB_REF)      { $env:XBB_REF }      else { 'v0.1.5' }
 $BaseUrl = if ($env:XBB_BASE_URL) { $env:XBB_BASE_URL } else { "https://cdn.jsdelivr.net/gh/$Owner/$Repo@$Ref" }
 
 $ClaudeDir = if ($env:CLAUDE_DIR) { $env:CLAUDE_DIR } else { Join-Path $HOME '.claude' }
