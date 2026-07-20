@@ -114,13 +114,19 @@ is missing:
   `install.sh`.
 
 At review time, the Codex reviewer is spawned per round with `--sandbox
-workspace-write` (scoped to a per-run scratch directory, never the reviewed
-project — `read-only` would also block its own `send.sh` call back to
-agmsg) and the configured model/effort; its replies travel over agmsg
-messages. If it stops answering partway through (rate limit, API error —
-the two are indistinguishable from outside), the run aborts the review
-loop, keeps all work completed so far, and reports the review as incomplete
-with next steps, rather than retrying indefinitely.
+workspace-write` (scoped to a fixed scratch directory reused across every
+run, never the reviewed project — `read-only` would also block its own
+`send.sh` call back to agmsg) and the configured model/effort; its replies
+travel over agmsg messages. If it stops answering partway through (rate
+limit, API error — the two are indistinguishable from outside), the run
+aborts the review loop, keeps all work completed so far, and reports the
+review as incomplete with next steps, rather than retrying indefinitely.
+
+Because that scratch directory is fixed and reused, the very first time
+`reviewer=codex` actually spawns a review, the Codex CLI itself shows a
+one-time "Do you trust the contents of this directory?" prompt in its pane
+— answer it once; every later round and run reuses the same, by-then-
+trusted directory and never shows it again.
 
 **Terminal behavior for the codex reviewer**: inside cmux, it opens as a
 split surface in the current workspace (auto-detected via
@@ -131,16 +137,17 @@ auto-closed — a known limitation.
 
 #### Files created at runtime
 
-xbb writes one file under `~/.xbb/` as needed, not part of the installer
-payload or touched by `--uninstall`:
+xbb writes a couple of things under `~/.xbb/` as needed, not part of the
+installer payload or touched by `--uninstall`:
 
 - `config.json` — settings, see [Configuration](#configuration-xbb-config).
+- `codex-cwd/` — the Codex reviewer's fixed scratch working directory (see
+  above); empty, reused across every run, never the reviewed project.
 
-The codex reviewer's per-run spawn options, scratch cwd, and surface
-marker live under that run's own `$TMPDIR/xbb-run-<id>/` directory instead
-(see [Housekeeping](#housekeeping-xbb-clean)) — scoped per run so
-concurrent `/xbb --wang` runs never share, and therefore never race on,
-the same file.
+The codex reviewer's per-round spawn options and surface marker live under
+that run's own `$TMPDIR/xbb-run-<id>/` directory instead (see
+[Housekeeping](#housekeeping-xbb-clean)) — scoped per run so concurrent
+`/xbb --wang` runs never share, and therefore never race on, the same file.
 
 To remove `~/.xbb` (settings included), run `rm -rf ~/.xbb`.
 
@@ -296,7 +303,7 @@ rm ~/.claude/agents/xbb-coder.md
 rm ~/.claude/agents/xbb-reviewer.md
 ```
 
-None of the above touches `~/.xbb/` (config — see
+None of the above touches `~/.xbb/` (config and the codex scratch cwd — see
 [Files created at runtime](#files-created-at-runtime)); the uninstaller
 intentionally leaves it so your settings survive reinstalls. To remove
 settings too: `rm -rf ~/.xbb`.
