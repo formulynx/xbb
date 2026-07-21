@@ -6,13 +6,18 @@
 # tells it what the team config.json currently supports.
 #
 # A member's "isActive" field is true only while it is mid-turn; it goes
-# false the instant it goes idle -- which covers BOTH "genuinely done" (sent
-# its STATUS/VERDICT signal and stopped) AND "merely paused" (sent a live
-# escalation and is waiting on the orchestrator's reply). So a `false`
-# member from `count`/`gate` is only a *candidate* to stop, never a standing
-# instruction -- the caller must cross-check each one against its own
-# STATUS-signal bookkeeping before calling TaskStop on it. `sweep` is the
-# one exception: call it only once every teammate is already known
+# false the instant it goes idle -- which covers "genuinely done" (sent its
+# STATUS/VERDICT signal and stopped), "merely paused" (sent a live
+# escalation and is waiting on the orchestrator's reply), AND "finished but
+# not yet graded" (sent STATUS: DONE but the orchestrator hasn't read/
+# accepted the report yet). None of these close the member's underlying
+# tmux pane/process -- only TaskStop does that -- so `gate` weighs ACTIVE
+# and FINISHED together against <max-concurrent>: an idle-but-unstopped
+# member still occupies a real process slot, not just a mid-turn one. So a
+# `false` member from `count`/`gate` is only a *candidate* to stop, never a
+# standing instruction -- the caller must cross-check each one against its
+# own STATUS-signal bookkeeping before calling TaskStop on it. `sweep` is
+# the one exception: call it only once every teammate is already known
 # DONE/abandoned (SKILL.md step 6), at which point acting on its output
 # unconditionally is safe.
 #
@@ -52,12 +57,12 @@ case "$cmd" in
     ;;
   gate)
     max="${4:?max-concurrent required}"; want="${5:?want-n required}"
-    active_n=$(rows | awk -F'\t' '$2=="true"' | wc -l | tr -d ' ')
-    if [ $((active_n + want)) -le "$max" ]; then
+    total_n=$(rows | wc -l | tr -d ' ')
+    have=$(rows | awk -F'\t' '$2=="false"' | wc -l | tr -d ' ')
+    if [ $((total_n + want)) -le "$max" ]; then
       echo "SPAWN $want"
     else
-      need=$((active_n + want - max))
-      have=$(rows | awk -F'\t' '$2=="false"' | wc -l | tr -d ' ')
+      need=$((total_n + want - max))
       candidates=$(rows | awk -F'\t' '$2=="false"{print $1}' | head -n "$need" | tr '\n' ' ')
       echo "HOLD need=$need candidates=$candidates"
       [ "$have" -lt "$need" ] && echo "SHORTFALL $((need - have))"

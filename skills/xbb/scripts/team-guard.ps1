@@ -38,12 +38,12 @@ switch ($Cmd) {
   'gate' {
     if (-not $Max -or -not $Want) { Write-Error "max-concurrent and want-n required"; exit 1 }
     $rows = Get-Rows
-    $activeN = @($rows | Where-Object Active).Count
-    if (($activeN + $Want) -le $Max) {
+    $totalN = $rows.Count
+    $finished = @($rows | Where-Object { -not $_.Active })
+    if (($totalN + $Want) -le $Max) {
       Write-Output "SPAWN $Want"
     } else {
-      $need = $activeN + $Want - $Max
-      $finished = @($rows | Where-Object { -not $_.Active })
+      $need = $totalN + $Want - $Max
       $candidates = @($finished.Name | Select-Object -First $need)
       Write-Output "HOLD need=$need candidates=$($candidates -join ' ')"
       if ($finished.Count -lt $need) {
