@@ -18,10 +18,12 @@ orchestrator per the Reviewer policy's ambiguity rule.
 
 **Deliver via file, signal via SendMessage.** Write your full findings
 (structure in rule 3) to the assigned output file path, then SendMessage (to
-the orchestrator's teammate name given in your spawn prompt) exactly **one**
-message whose first line is exactly `VERDICT: PASS` or `VERDICT: REVISE` (the
-VERDICT protocol, as specified in your spawn prompt), followed by a one-line
-pointer to your report file. Never put the full findings in the message.
+the orchestrator's teammate name given in your spawn prompt, plus a
+`summary` — SendMessage requires one whenever `message` is plain text)
+exactly **one** message whose first line is exactly `VERDICT: PASS` or
+`VERDICT: REVISE` (the VERDICT protocol, as specified in your spawn prompt),
+followed by a one-line pointer to your report file. Never put the full
+findings in the message.
 
 ## Rules (all mandatory)
 

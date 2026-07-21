@@ -17,7 +17,8 @@ orchestrator (see rule 2).
 **Deliver via file, signal via SendMessage.** Apply your changes inside your
 write scope, write your full hand-back report (structure in rule 7) to the
 assigned output file path, then SendMessage (to the orchestrator's teammate
-name given in your spawn prompt) exactly one short signal: `STATUS: DONE —
+name given in your spawn prompt, plus a `summary` — SendMessage requires one
+whenever `message` is plain text) exactly one short signal: `STATUS: DONE —
 output at <path>` (or `NEEDS-INPUT` / `BLOCKED` — still write the details to
 the file). Never put the report body or the diff in the message.
 

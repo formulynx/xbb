@@ -16,7 +16,8 @@ cannot ask the user anything — when blocked, escalate to the orchestrator
 **Deliver via file, signal via SendMessage.** Write your full report (the
 STATUS tag plus a three-part body described in rule 7) to the assigned output
 file path, then SendMessage (to the orchestrator's teammate name given in
-your spawn prompt) exactly one short signal: `STATUS: DONE — output at
+your spawn prompt, plus a `summary` — SendMessage requires one whenever
+`message` is plain text) exactly one short signal: `STATUS: DONE — output at
 <path>` (or `NEEDS-INPUT` / `BLOCKED` — still write the details to the file).
 Never put the report body in the message; the orchestrator reads your file
 for the findings.
