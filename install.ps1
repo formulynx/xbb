@@ -46,6 +46,7 @@ $Payload = @(
 
 # Records the installed ref (remote mode only); lets re-runs skip when current.
 $RefFile = Join-Path $SkillDir '.xbb-ref'
+$Action  = 'installed'
 
 if ($Uninstall) {
   Say "Removing $SkillDir"
@@ -84,7 +85,7 @@ if ($RepoDir -and (Test-Path $LocalSkill)) {
     Say "xbb $Ref is already installed - nothing to do."
     return
   }
-  if ($Current) { Say "Updating xbb from $Current to $Ref" }
+  if ($Current) { Say "Updating xbb from $Current to $Ref"; $Action = 'updated' }
   else          { Say "Installing xbb $Ref" }
   Say "Mode: remote - downloading from $BaseUrl"
   New-Item -ItemType Directory -Force -Path $SkillsDir, $AgentsDir, (Join-Path $SkillDir 'scripts') | Out-Null
@@ -97,4 +98,4 @@ if ($RepoDir -and (Test-Path $LocalSkill)) {
   Set-Content -Path $RefFile -Value $Ref
 }
 
-Write-Output "xbb $Ref installed successfully. Restart Claude Code (or start a new session) to pick it up."
+Write-Output "xbb $Ref $Action successfully.`n`nRestart Claude Code (or start a new session) to pick it up."

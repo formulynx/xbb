@@ -23,6 +23,7 @@ main() {
   local agents_dir="$claude_dir/agents"
   local skill_link="$skills_dir/xbb"
   local ref_file="$skill_link/.xbb-ref"
+  local action="installed"
 
   # Payload: src-relative-path -> dest-path
   local srcs=(
@@ -119,6 +120,7 @@ main() {
     fi
     if [ -n "$current" ]; then
       say "Updating xbb from $current to $REF"
+      action="updated"
     else
       say "Installing xbb $REF"
     fi
@@ -150,7 +152,7 @@ main() {
     echo "$REF" > "$ref_file"
   fi
 
-  echo "xbb $REF installed successfully. Restart Claude Code (or start a new session) to pick it up."
+  printf 'xbb %s %s successfully.\n\nRestart Claude Code (or start a new session) to pick it up.\n' "$REF" "$action"
 }
 
 fetch() {
