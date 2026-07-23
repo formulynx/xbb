@@ -187,7 +187,7 @@ not create reliably. WSL has no such caveat. `install.ps1` always copies.
 ### Quick install (curl | bash via jsDelivr)
 
 ```sh
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.10/install.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.11/install.sh | bash
 ```
 
 This fetches `skills/xbb/SKILL.md`, its `scripts/` helpers, and the three
@@ -197,7 +197,7 @@ afterwards.
 
 Before piping a remote script into `bash`, it's good practice to inspect it
 first: `curl -fsSL <same-url> -o install.sh && less install.sh && bash
-install.sh`. The one-liner above is pinned to a released tag (`@v0.1.10`) so
+install.sh`. The one-liner above is pinned to a released tag (`@v0.1.11`) so
 installs stay reproducible — jsDelivr caches tags/commits effectively
 forever. Each release updates this README to point at the new tag; if you
 want the latest in-development code instead, substitute `@main` (a moving
@@ -232,7 +232,7 @@ For native Windows without a POSIX shell, use the PowerShell installer. Quick
 install:
 
 ```powershell
-irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.10/install.ps1 | iex
+irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.11/install.ps1 | iex
 ```
 
 Or from a git clone:
@@ -255,12 +255,12 @@ current process only: `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
 ## Update
 
 If you installed via curl | bash, re-running the same pinned one-liner just
-reinstalls the same `v0.1.10` copies — it does not fetch newer code. To
-upgrade, run the one-liner for the newer release tag (swap `@v0.1.10` for the
+reinstalls the same `v0.1.11` copies — it does not fetch newer code. To
+upgrade, run the one-liner for the newer release tag (swap `@v0.1.11` for the
 new tag), or use `@main` for the latest in-development version:
 
 ```sh
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.10/install.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.11/install.sh | bash
 ```
 
 If you installed via git clone, pull the repo instead:
@@ -282,13 +282,13 @@ xbb/install.sh --uninstall
 
 (or, if installed via curl | bash without keeping the script around, fetch
 it again first: `curl -fsSL
-https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.10/install.sh | bash -s --
+https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.11/install.sh | bash -s --
 --uninstall`). This works for both the symlink and copy install methods.
 
 On native Windows, download `install.ps1` and run it with `-Uninstall`:
 
 ```powershell
-irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.10/install.ps1 -OutFile install.ps1
+irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.1.11/install.ps1 -OutFile install.ps1
 .\install.ps1 -Uninstall
 ```
 

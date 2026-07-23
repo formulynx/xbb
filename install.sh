@@ -12,7 +12,7 @@ set -euo pipefail
 
 OWNER=formulynx
 REPO=xbb
-REF="${XBB_REF:-v0.1.10}"
+REF="${XBB_REF:-v0.1.11}"
 BASE_URL="${XBB_BASE_URL:-https://cdn.jsdelivr.net/gh/$OWNER/$REPO@$REF}"
 
 say() { echo "==> $*"; }
