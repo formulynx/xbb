@@ -18,7 +18,11 @@ param(
 )
 
 function Get-Rows {
-  if (-not (Test-Path -LiteralPath $TeamFile)) { return @() }
+  # A missing team file is a hard error (exit 2), never an empty result -- see
+  # team-guard.sh's rows() for why collapsing the two into `ACTIVE 0` is unsafe.
+  if (-not (Test-Path -LiteralPath $TeamFile)) {
+    Write-Error "TEAMFILE-MISSING $TeamFile"; exit 2
+  }
   $cfg = Get-Content -LiteralPath $TeamFile -Raw | ConvertFrom-Json
   $infix = "-$RunId-"
   @($cfg.members | Where-Object { $_.name -ne 'team-lead' -and $_.name -like "*$infix*" } |

@@ -39,10 +39,18 @@ cmd="${1:-}"; file="${2:-}"; run_id="${3:-}"
 [ -n "$cmd" ] && [ -n "$file" ] && [ -n "$run_id" ] || usage
 
 # name<TAB>true|false, one line per non-team-lead member carrying this run's
-# infix. Empty (not an error) when the team file doesn't exist yet or has
-# no such members.
+# infix. A *missing* team file is a hard error (exit 2), never an empty
+# result: once this run has spawned anything the file must exist, so
+# "unreadable" and "no live members" must not collapse into the same
+# `ACTIVE 0` answer -- that ambiguity is what makes a caller mistake a
+# mis-resolved path for a dead teammate. Empty output (file present, no
+# matching members) is still fine and not an error.
+# Checked here, not inside rows(): `count` calls rows() in command
+# substitution, where an exit would only kill the subshell and still print
+# `ACTIVE 0` with exit 0 -- the exact ambiguity this guard exists to remove.
+[ -f "$file" ] || { echo "TEAMFILE-MISSING $file" >&2; exit 2; }
+
 rows() {
-  [ -f "$file" ] || return 0
   jq -r --arg rid "-$run_id-" \
     '.members[] | select(.name != "team-lead" and (.name | contains($rid)))
      | "\(.name)\t\(.isActive == true)"' "$file"
@@ -65,7 +73,10 @@ case "$cmd" in
       need=$((total_n + want - max))
       candidates=$(rows | awk -F'\t' '$2=="false"{print $1}' | head -n "$need" | tr '\n' ' ')
       echo "HOLD need=$need candidates=$candidates"
-      [ "$have" -lt "$need" ] && echo "SHORTFALL $((need - have))"
+      # `if`, not `[ ... ] &&`: the failed test would be the script's last
+      # status, exiting 1 on a perfectly normal HOLD -- now that exit 2 means
+      # "team file unreadable", a spurious non-zero here is misreadable.
+      if [ "$have" -lt "$need" ]; then echo "SHORTFALL $((need - have))"; fi
     fi
     ;;
   sweep)
