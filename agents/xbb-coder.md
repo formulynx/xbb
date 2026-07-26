@@ -1,6 +1,6 @@
 ---
 name: xbb-coder
-description: Implementation subagent for /xbb coding mode. Implements one assigned, exclusively-scoped code change, verifies it mechanically (tests/lint/build), and hands back a diff report to the orchestrator.
+description: Implementation subagent for /xbb coding mode, spawned by the /xbb orchestrator, which owns its naming, write scope and shutdown — reach it by invoking /xbb (composes with other skills, e.g. `/goal /xbb ...`). Implements one assigned, exclusively-scoped code change, verifies it mechanically (tests/lint/build), and hands back a diff report to the orchestrator.
 model: sonnet
 effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit, WebFetch, WebSearch, SendMessage

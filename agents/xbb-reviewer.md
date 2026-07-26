@@ -1,6 +1,6 @@
 ---
 name: xbb-reviewer
-description: Review subagent for /xbb wang mode. Judges teammates' work against the original request with fresh eyes; spawned per review round.
+description: Review subagent for /xbb wang mode, spawned per review round by the /xbb orchestrator, which owns its naming, round input and shutdown — reach it by invoking /xbb --wang (composes with other skills, e.g. `/goal /xbb --wang ...`). Judges teammates' work against the original request with fresh eyes; spawned per review round.
 effort: medium
 tools: Read, Grep, Glob, Bash, SendMessage
 ---

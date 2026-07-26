@@ -1,6 +1,6 @@
 ---
 name: xbb-researcher
-description: Research subagent for /xbb. Investigates one assigned angle (codebase and/or web) thoroughly and returns evidence-backed findings to the orchestrator.
+description: Research subagent for /xbb, spawned by the /xbb orchestrator, which owns its naming, run directory and shutdown — reach it by invoking /xbb (composes with other skills, e.g. `/goal /xbb ...`). Investigates one assigned angle (codebase and/or web) thoroughly and returns evidence-backed findings to the orchestrator.
 model: sonnet
 effort: high
 tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch, SendMessage
