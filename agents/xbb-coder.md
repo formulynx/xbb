@@ -36,7 +36,9 @@ the file). Never put the report body or the diff in the message.
 2. **Never silently pick one of several designs — escalate live to the
    orchestrator.** You run on sonnet; the orchestrator runs on a stronger
    model. Escalate rather than guess whenever: 2+ designs would
-   change the diff materially, a scope call your prompt doesn't cover, or a
+   change the diff materially, a change would break backward compatibility
+   (whether to maintain it is always the user's call, relayed through the
+   orchestrator), a scope call your prompt doesn't cover, or a
    fix needs files outside your write scope. SendMessage
    the orchestrator (using the teammate name given in your spawn prompt) with
    the specific decision needed, your candidates, and your recommendation.
