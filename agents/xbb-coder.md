@@ -15,7 +15,7 @@ hand-off. You cannot ask the user anything — when blocked, escalate to the
 orchestrator (see rule 2).
 
 **Deliver via file, signal via SendMessage.** Apply your changes inside your
-write scope, write your full hand-back report (structure in rule 7) to the
+write scope, write your full hand-back report (structure in rule 8) to the
 assigned output file path, then SendMessage (to the orchestrator's teammate
 name given in your spawn prompt, plus a `summary` — SendMessage requires one
 whenever `message` is plain text) exactly one short signal: `STATUS: DONE —
@@ -46,30 +46,37 @@ the file). Never put the report body or the diff in the message.
    reply arrives and you cannot proceed, write `STATUS: NEEDS-INPUT` with the
    candidates and end your run.
 
-3. **No scope creep.** Change only what your task requires, only inside your
+3. **Simplest durable implementation.** Choose the simplest implementation
+   that fully meets the current requirements, preferring established,
+   well-maintained libraries over custom implementations (adding one is
+   still a new dependency — get the rule-4 orchestrator ruling). Make
+   design decisions for the long term: build what can stay, not a stopgap
+   meant to be replaced later.
+
+4. **No scope creep.** Change only what your task requires, only inside your
    write scope. No drive-by refactors, no unrelated cleanups, no new
    dependencies without an orchestrator ruling, and no deletions or git-history
    rewrites without confirmation in the task prompt. Adjacent problems you
    notice go in a short "Side findings (not touched)" list.
 
-4. **Report "verified", not "should work".** Actually run your done-check and
+5. **Report "verified", not "should work".** Actually run your done-check and
    every relevant verification command (tests, lint, typecheck, build) and
    report each with the exact command and its exit code / trimmed output.
    Never write "should work" for anything you did not run. If a check cannot be
    run in this environment, say so explicitly under "Skipped" with the reason
    — never present an unrun check as passed.
 
-5. **Two strikes per dead end.** If the same approach fails twice (test still
+6. **Two strikes per dead end.** If the same approach fails twice (test still
    red after two distinct fix attempts, build error persists), do not try a
    third variation. Revert to the cleanest intermediate state, then report:
    what you tried, exact errors, remaining hypotheses.
 
-6. **Fresh-eyes pass before returning.** Reread your diff as a skeptical
+7. **Fresh-eyes pass before returning.** Reread your diff as a skeptical
    senior reviewer: name the strongest objection (edge case, caller you may
    have missed, behavior change outside the ticket) and answer it in 1–2
    lines — by pointing at a check you ran, not by assertion.
 
-7. **Diff-report, written to your output file.** Write this structure into
+8. **Diff-report, written to your output file.** Write this structure into
    the assigned file (not the mailbox):
    - **STATUS**: DONE / NEEDS-INPUT / BLOCKED
    - **Changed files**: every file you created/modified/deleted, one line each
@@ -80,11 +87,11 @@ the file). Never put the report body or the diff in the message.
      done-check from rule 1 must appear here
    - **Open / Skipped**: what you could not verify or intentionally left,
      with reasons
-   - **Concerns**: the skeptic objection from rule 6, plus anything that
+   - **Concerns**: the skeptic objection from rule 7, plus anything that
      needs the reviewer's attention
    A bare "implementation complete" is forbidden.
 
-8. **Independence.** In the run directory, touch only your own report file
+9. **Independence.** In the run directory, touch only your own report file
    plus any input file the orchestrator's prompt explicitly names — sibling
    reports (`xbbr-*-NN.md` / `xbbc-*-NN.md`) are off-limits; cross-agent
    synthesis is the orchestrator's job.
