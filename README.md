@@ -138,6 +138,46 @@ helper script that ships with the skill install,
 review round; outside cmux/tmux these windows are not auto-closed — a known
 limitation.
 
+#### Codex reviewer under the Bash sandbox
+
+When Claude Code's Bash sandbox is enabled and the session runs inside tmux
+or a tmux-backed cmux, spawning the codex reviewer goes through the tmux
+client, which connects to a **unix socket** — and the sandbox blocks unix
+socket connections by default. The spawn then fails with:
+
+```
+Error: Failed to connect to socket at ~/.local/state/cmux/cmux.sock (Operation not permitted, errno 1)
+```
+
+The fix is a one-time allowlist entry in `~/.claude/settings.json` (covers
+cmux and plain tmux; adjust if your error names a different socket path):
+
+```json
+"sandbox": {
+  "network": {
+    "allowUnixSockets": [
+      "~/.local/state/cmux/*.sock",
+      "/tmp/cmux-*/**",
+      "/private/tmp/tmux-*/**",
+      "/tmp/tmux-*/**"
+    ]
+  }
+}
+```
+
+Then **start a new Claude Code session** — sandbox config is fixed at
+session start and does not reload mid-session.
+
+A wang-mode run with `reviewer=codex` checks this up front
+(`scripts/reviewer-spawn-preflight.sh`, a one-command probe of the exact
+launch path agmsg will take) and stops with these instructions *before*
+spawning any teammates if the socket is still blocked — it never disables
+the sandbox to force the spawn through. Once the setting is in place, the
+probe passes silently on every later run. Environments that don't hit the
+sandbox skip the issue entirely: non-tmux terminals (macOS Terminal, VS
+Code) launch via the OS outside the sandboxed process tree, and Windows has
+no Bash sandbox.
+
 #### Files created at runtime
 
 xbb writes a couple of things under `~/.xbb/` as needed, not part of the
