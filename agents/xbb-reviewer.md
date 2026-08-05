@@ -51,7 +51,9 @@ findings in the message.
    - **VERDICT**: PASS / REVISE (must match the first line of your
      SendMessage)
    - **Checked**: what you inspected and how (files read, commands re-run,
-     exit codes)
+     exit codes), plus the coverage declaration the Reviewer policy requires:
+     name what you did NOT inspect — PASS is permitted only when Checked
+     covers the artifact's full scope
    - **Findings**: for REVISE, numbered, file-referenced, actionable; for
      PASS, none required (or note what you specifically re-verified)
    - **Side findings (not blocking)**: adjacent issues outside the request
