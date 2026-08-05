@@ -128,12 +128,15 @@ one-time "Do you trust the contents of this directory?" prompt in its pane
 — answer it once; every later round and run reuses the same, by-then-
 trusted directory and never shows it again.
 
-**Terminal behavior for the codex reviewer**: inside cmux, it opens as a
-split surface in the current workspace (auto-detected via
-`CMUX_SOCKET_PATH`, via a helper script that ships with the skill install,
-`scripts/cmux-spawn-split.sh`); inside tmux, a new pane; otherwise a new OS
-terminal window per review round. Outside cmux/tmux, these windows are not
-auto-closed — a known limitation.
+**Terminal behavior for the codex reviewer**: inside tmux — including a
+tmux-backed cmux session such as `cmux claude-teams`, where `$TMUX` is set —
+it opens as a new tmux pane (agmsg always prefers this path when `$TMUX` is
+set). In a cmux frontend *without* a tmux backend (`CMUX_SOCKET_PATH` set,
+`$TMUX` not), it opens as a split surface in the current workspace via a
+helper script that ships with the skill install,
+`scripts/cmux-spawn-split.sh`. Otherwise, a new OS terminal window per
+review round; outside cmux/tmux these windows are not auto-closed — a known
+limitation.
 
 #### Files created at runtime
 
