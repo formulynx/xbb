@@ -149,17 +149,22 @@ socket connections by default. The spawn then fails with:
 Error: Failed to connect to socket at ~/.local/state/cmux/cmux.sock (Operation not permitted, errno 1)
 ```
 
-The fix is a one-time allowlist entry in `~/.claude/settings.json` (covers
-cmux and plain tmux; adjust if your error names a different socket path):
+The fix is a one-time allowlist entry in `~/.claude/settings.json`. On
+macOS, `sandbox.network.allowUnixSockets` matches paths as literal
+subpaths, not shell globs — this isn't documented by Claude Code, so a
+wildcard entry like `"~/.local/state/cmux/*.sock"` silently never matches
+and the socket stays blocked. Use the containing directory itself, with no
+wildcard — Seatbelt's subpath semantics cover everything underneath it
+(covers cmux and plain tmux; adjust if your error names a different socket
+path):
 
 ```json
 "sandbox": {
   "network": {
     "allowUnixSockets": [
-      "~/.local/state/cmux/*.sock",
-      "/tmp/cmux-*/**",
-      "/private/tmp/tmux-*/**",
-      "/tmp/tmux-*/**"
+      "~/.local/state/cmux",
+      "/tmp",
+      "/private/tmp"
     ]
   }
 }
