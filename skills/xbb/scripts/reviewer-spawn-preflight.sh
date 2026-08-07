@@ -38,21 +38,21 @@ Bash sandbox in this environment. Probe \`tmux display-message\` returned:
 
 Fix (one-time): allow the tmux/cmux socket in ~/.claude/settings.json under
 sandbox.network.allowUnixSockets, then START A NEW Claude Code session —
-sandbox config is fixed at session start and does not reload mid-session:
+sandbox config is fixed at session start and does not reload mid-session.
+Entries match as literal subpaths, not globs — list the containing
+directory, no wildcards:
 
   "sandbox": {
     "network": {
       "allowUnixSockets": [
-        "~/.local/state/cmux/*.sock",
-        "/tmp/cmux-*/**",
-        "/private/tmp/tmux-*/**",
-        "/tmp/tmux-*/**"
+        "~/.local/state/cmux"
       ]
     }
   }
 
 This session's tmux socket: $sock
-If the error above names a different socket path, allowlist that path instead.
+If the error above names a different socket path, allowlist that path's
+containing directory instead (e.g. plain tmux: "/private/tmp/tmux-<uid>").
 See the xbb README, section "Codex reviewer under the Bash sandbox".
 EOF
 exit 1
