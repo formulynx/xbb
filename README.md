@@ -173,6 +173,26 @@ path):
 Then **start a new Claude Code session** — sandbox config is fixed at
 session start and does not reload mid-session.
 
+Under a tmux-backed cmux specifically, the spawn also writes cmux's own
+tmux-compat store (`~/.cmuxterm/tmux-compat-store.json`), staged first as a
+temp file in the per-user temp directory before being renamed into place —
+so `sandbox.filesystem.allowWrite` needs entries for both paths as well:
+
+```json
+"sandbox": {
+  "filesystem": {
+    "allowWrite": [
+      "~/.cmuxterm",
+      "/var/folders/<uid-hash>/T"
+    ]
+  }
+}
+```
+
+The literal per-user temp path (`getconf DARWIN_USER_TEMP_DIR`) is required,
+not a glob — same subpath semantics as above. Same as above, takes effect
+in a new session.
+
 A wang-mode run with `reviewer=codex` checks this up front
 (`scripts/reviewer-spawn-preflight.sh`, a one-command probe of the exact
 launch path agmsg will take) and stops with these instructions *before*

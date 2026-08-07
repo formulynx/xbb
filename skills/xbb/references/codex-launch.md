@@ -2,14 +2,15 @@
 
 This doc is consulted at the **Spawn** step of the Codex reviewer path
 (SKILL.md), right after `scripts/detect-agent-workspace.sh` has printed one
-identifier for the current shell. Look up that identifier below for whether
-the upcoming `spawn.sh` call needs `dangerouslyDisableSandbox: true` or any
-other special handling.
+identifier for the current shell. Look up that identifier below for any
+per-environment handling the upcoming `spawn.sh` call needs.
 
-Most environments need **zero** special handling — agmsg's own `spawn.sh`
-already picks the right launcher (tmux pane, Herdr pane, or `open -a
-<terminal>`) and that launcher works from inside the Bash sandbox as-is.
-Currently only one environment (`cmux-tmux`) is a documented exception.
+Every detected environment launches normally with the sandbox on —
+agmsg's own `spawn.sh` already picks the right launcher (tmux pane, Herdr
+pane, or `open -a <terminal>`) and that launcher works from inside the Bash
+sandbox as-is. `cmux-tmux` needs a one-time
+`sandbox.filesystem.allowWrite` settings addition (below); every other
+environment launches normally with no setup at all.
 
 Non-cmux detection is currently deactivated: `detect-agent-workspace.sh`
 prints only `cmux-tmux`, `cmux-native`, or `other`. The per-environment
@@ -23,34 +24,27 @@ existing tmux/Herdr/terminal-open logic.
 
 ## `cmux-tmux`
 
-The one environment needing an exception.
+Launches normally with the sandbox on, given a one-time settings addition.
 
 Inside a tmux-backed cmux pane (e.g. `cmux claude-teams`), both `$TMUX` and
 `$CMUX_CLAUDE_TEAMS_CMUX_BIN` are set. Because `$TMUX` is set, agmsg's
 `spawn.sh` takes its tmux-pane path, which execs `cmux __tmux-compat
 new-window`/`split-window`. cmux's own tmux-compat layer
-(`saveTmuxCompatStore()` in `CLI/cmux.swift`) then deterministically fails to
-write `~/.cmuxterm/tmux-compat-store.json`, with `Operation not permitted`
-(`NSCocoaErrorDomain` 513), on every attempt — regardless of environment
-state. This was exhaustively diagnosed and ruled not fixable client-side:
-checked and ruled out were Claude Code sandbox settings for both network and
-filesystem, Unix `chmod 666` on the target file, ACLs/xattrs/BSD flags, Apple
-App Sandbox entitlements on the cmux binaries (absent — cmux isn't sandboxed
-by Apple's own mechanism at all), macOS TCC/Full Disk Access, a full OS
-restart, and recreating the target file fresh. The bug lives in cmux's own
-tmux-compat code path, unrelated to any client-side permission surface.
-
-**Fix**: run the `spawn.sh` Bash call with `dangerouslyDisableSandbox: true`,
-scoped to that one call only. Never generalize this exception to any other
-call in the skill.
+(`saveTmuxCompatStore()` in `CLI/cmux.swift`) updates
+`~/.cmuxterm/tmux-compat-store.json` via an atomic write, staged first as a
+temp file in the per-user temp directory (`getconf DARWIN_USER_TEMP_DIR`)
+and then renamed into place — so `~/.claude/settings.json` needs
+`sandbox.filesystem.allowWrite` entries for both paths. See README's
+"Codex reviewer under the Bash sandbox" section for the full setup
+(JSON snippet included).
 
 ## `cmux-native`
 
 cmux with `$CMUX_SOCKET_PATH` set but `$TMUX` not set (native pane creation,
 not tmux-backed). This goes through a different cmux code path
 (`cmux new-split`/`cmux send`) with no reference to
-`tmux-compat-store.json` in its source, so it likely does **not** hit the
-`cmux-tmux` bug above. This has not been empirically confirmed end-to-end
+`tmux-compat-store.json` in its source, so it likely does **not** need the
+`cmux-tmux` allowlist addition above. This has not been empirically confirmed end-to-end
 live (a separate, unrelated PATH-resolution issue blocked that specific test)
 — the separation is solid at the source level only. No exception is applied
 here currently; if a similar spawn failure is ever observed under
