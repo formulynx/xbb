@@ -359,3 +359,7 @@ None of the above touches `~/.xbb/` (config and the codex scratch cwd, see
 [Files created at runtime](#files-created-at-runtime)); the uninstaller
 intentionally leaves it so your settings survive reinstalls. To remove
 settings too: `rm -rf ~/.xbb`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
