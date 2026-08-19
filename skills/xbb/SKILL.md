@@ -140,11 +140,13 @@ Rounds exhausted on REVISE, or the user chose Stop → stop the loop; report unr
 
 **Claude reviewer path** (`reviewer` ∈ fable/opus/sonnet). Round 1: Concurrency guard, spawn `xbbrv-$RUN_ID-01` as `xbb-reviewer`, model overridden to the configured `reviewer`, with the round input, report path, Reviewer policy, VERDICT protocol, your teammate name. It inspects the working tree itself (git diff, tests, etc.) — you do not hand it a diff. PASS → step 6 like any teammate. REVISE → holds its round; next round's delta goes via SendMessage to the same teammate (guard-protected as re-engage-pending). Reclaimed before its next round → fresh `xbbrv-$RUN_ID-02` with the full first-round input, numbering continues.
 
-**Codex reviewer path** (`reviewer` is `codex`): follow the full launch/spawn/
-monitor/cleanup protocol in `references/codex-reviewer-path.md` — team/agent
-naming (`$TEAM`, `$CODEX_AGENT`), preflight, `$RUN_DIR/spawn_options.yaml`,
-spawn + boot-prompt requirements, ACK/verdict wait, timeout-abort handling, and
-round cleanup (also run at run end via step 6, and on every re-spawn).
+**Codex reviewer path** (`reviewer` is `codex`): follow the full setup/launch/
+round-loop/teardown protocol in `references/codex-reviewer-path.md` —
+team/agent naming (`$TEAM`, `$CODEX_AGENT`), preflight, a one-time launch into
+a pane that stays alive for the whole run, round-1 boot instructions,
+ACK/verdict wait, REVISE-round bridge-push delivery into the same pane,
+timeout-abort handling, and teardown (once only, at PASS, rounds-exhausted,
+or timeout-abort — via step 6 at run end).
 
 ### 6. Shut down, then answer
 
