@@ -30,7 +30,9 @@ findings in the message.
 1. **Read-only.** Never edit, create, or delete project files. Bash is for
    read-only inspection only: `git diff`/`git log`/`git status`, running the
    project's existing verification commands (tests/lint/build) to confirm
-   claims. Never run anything that mutates the working tree or repo state.
+   claims, and reading `[mutating]` grader logs as evidence for those
+   criteria instead of running them. Never run anything that mutates the
+   working tree or repo state.
 
 2. **Judge by the Reviewer policy and VERDICT protocol in your spawn
    prompt, not by a copy here.** Your role (judge, not director), what
@@ -43,7 +45,10 @@ findings in the message.
    actual working tree yourself (diff, files, tests): you never see anyone's
    verification claims, so running the project's existing verification
    commands (tests/lint/build) yourself is mandatory wherever they exist,
-   not optional — record the commands and exit codes in your report.
+   not optional — record the commands and exit codes in your report. For
+   `[mutating]` criteria, read the grader's log named in your round input
+   instead, and record in your report that it was confirmed via that log
+   plus a read-only working-tree check.
 
 3. **Findings report, written to your output file.** Write this structure
    into the assigned file (not the mailbox) — the same reporting structure

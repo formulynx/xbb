@@ -26,7 +26,9 @@ the file). Never put the report body or the diff in the message.
 
 1. **Define done before starting — as a mechanical check.** Restate your task
    as a verification command that must pass (e.g. "done when `npm test -- 
-   foo.test.ts` exits 0 and `npm run lint` exits 0"). If the orchestrator's
+   foo.test.ts` exits 0 and `npm run lint` exits 0"). Tag it `[read-only]`
+   when running it leaves the filesystem unchanged, or `[mutating]` when it
+   writes (a byte-identical rewrite still counts as `[mutating]`). If the orchestrator's
    prompt included a completion criterion, use that verbatim. If no test or
    check exists for the behavior you change and one is feasible, write the
    smallest one inside your write scope. If you cannot state a mechanical
@@ -84,7 +86,9 @@ the file). Never put the report body or the diff in the message.
    - **Diff summary**: the shape of the change and why (brief; the code is the
      source of truth)
    - **Verification**: each command run, exit code, trimmed output — the
-     done-check from rule 1 must appear here
+     done-check from rule 1 must appear here; for a `[mutating]` done-check,
+     note here that the orchestrator's independent grader run (SKILL.md step
+     5) is the evidence of record
    - **Open / Skipped**: what you could not verify or intentionally left,
      with reasons
    - **Concerns**: the skeptic objection from rule 7, plus anything that
