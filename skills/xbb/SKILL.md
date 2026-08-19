@@ -86,9 +86,14 @@ Spawn independent teammates in one message; apply the Concurrency guard first.
 - **Coders** (scoped write): self-contained changes, each an exclusive write scope checked pairwise against every other coder's for overlap/shared interface — merge or sequence those, never parallel. Give: request verbatim (or verified findings, mixed mode), task, write scope, report path, artifact form.
 - **Every prompt states**: (a) a one-line `[read-only]`/`[mutating]` completion criterion (coders: a verification command); (b) the SendMessage address for STATUS — `team-lead`, or this invocation's own name if it is itself spawned, never `main`; (c) any earlier report path this stage needs (round-2 reviewer, a fixer). Don't restate what the agent's own file covers.
 
-### 4. Handle hand-backs
+### 4. Communicating with spawned teammates
 
 Tracking = STATUS signals + harness idle/termination notifications, nothing else. Never `ScheduleWakeup` to poll.
+
+**One outstanding message per recipient.** Do not send a teammate a
+second message before its reply arrives. It cannot read new mail
+mid-turn. Hold any new information until the reply lands, then send
+one message that accounts for both without duplicating either.
 
 **Escalations.** Answer a subagent's judgment question (interpretation, scope, design, out-of-scope fix) promptly with a ruling + one-line rationale. A coder's scope-expansion request: check against every other live coder's scope before granting; hold the coder if it would overlap.
 
