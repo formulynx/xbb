@@ -34,14 +34,19 @@ $SkillDir  = Join-Path $SkillsDir 'xbb'
 # Keep in sync with install.sh's srcs/dests arrays. codex-reviewer-cleanup.sh,
 # cmux-spawn-split.sh, and detect-agent-workspace.sh are POSIX-only (the codex
 # reviewer / cmux terminal features they support are POSIX-only, per the
-# README) so they're not shipped here; team-guard.ps1 backs the Concurrency
-# guard, which applies regardless of OS, so it is. codex-launch.md is plain
-# reference text (no POSIX dependency) so it ships despite backing a
-# POSIX-only feature.
+# README) so they're not shipped here; resolve-team-file.sh and xbb-clean.sh
+# are the same kind of POSIX-only sibling to their .ps1 counterparts below,
+# so they're excluded too. team-guard.ps1 backs the Concurrency guard, which
+# applies regardless of OS, so it is. codex-launch.md and
+# codex-reviewer-path.md are plain reference text (no POSIX dependency) so
+# they ship despite backing a POSIX-only feature.
 $Payload = @(
   @{ Src = 'skills/xbb/SKILL.md';          Dest = (Join-Path $SkillDir  'SKILL.md') }
   @{ Src = 'skills/xbb/scripts/team-guard.ps1'; Dest = (Join-Path $SkillDir 'scripts/team-guard.ps1') }
+  @{ Src = 'skills/xbb/scripts/resolve-team-file.ps1'; Dest = (Join-Path $SkillDir 'scripts/resolve-team-file.ps1') }
+  @{ Src = 'skills/xbb/scripts/xbb-clean.ps1'; Dest = (Join-Path $SkillDir 'scripts/xbb-clean.ps1') }
   @{ Src = 'skills/xbb/references/codex-launch.md'; Dest = (Join-Path $SkillDir 'references/codex-launch.md') }
+  @{ Src = 'skills/xbb/references/codex-reviewer-path.md'; Dest = (Join-Path $SkillDir 'references/codex-reviewer-path.md') }
   @{ Src = 'agents/xbb-researcher.md';     Dest = (Join-Path $AgentsDir 'xbb-researcher.md') }
   @{ Src = 'agents/xbb-coder.md';          Dest = (Join-Path $AgentsDir 'xbb-coder.md') }
   @{ Src = 'agents/xbb-reviewer.md';       Dest = (Join-Path $AgentsDir 'xbb-reviewer.md') }
