@@ -20,7 +20,7 @@ $ErrorActionPreference = 'Stop'
 
 $Owner   = 'formulynx'
 $Repo    = 'xbb'
-$Ref     = if ($env:XBB_REF)      { $env:XBB_REF }      else { 'v0.3.0-beta2' }
+$Ref     = if ($env:XBB_REF)      { $env:XBB_REF }      else { 'v0.3.0-beta3' }
 $BaseUrl = if ($env:XBB_BASE_URL) { $env:XBB_BASE_URL } else { "https://cdn.jsdelivr.net/gh/$Owner/$Repo@$Ref" }
 
 function Say($msg) { Write-Output "==> $msg" }
