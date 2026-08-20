@@ -97,7 +97,9 @@ one message that accounts for both without duplicating either.
 
 **Escalations.** Answer a subagent's judgment question (interpretation, scope, design, out-of-scope fix) promptly with a ruling + one-line rationale. A coder's scope-expansion request: check against every other live coder's scope before granting; hold the coder if it would overlap.
 
-**Notification filter.** Ignore any message/signal/notification whose sender name lacks this run's `-$RUN_ID-` infix.
+**Notification filter.** Act only on (a) STATUS messages, (b) termination notifications, (c) the no-STATUS fallback in Reading reports.  
+Idle notifications are not events. Never narrate, acknowledge, or message a teammate in response to one.  
+Also ignore any message/signal/notification whose sender name lacks this run's `-$RUN_ID-` infix.
 
 **Reading reports.** A teammate's own `STATUS: DONE` is the sole trigger to read its file. Fallback: idle/termination notification with no STATUS ever sent → read the file directly; empty/missing → one re-poke via SendMessage before re-spawning.
 
