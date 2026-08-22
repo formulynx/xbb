@@ -46,7 +46,7 @@ Resolve `<team-file>` with `$RUN_ID` (step 3), reuse through step 6. Path is pro
 bash "<skill-dir>/scripts/team-guard.sh" <mode> <team-file> "$RUN_ID" ...  # PowerShell: team-guard.ps1
 ```
 
-`isActive` is `true` only mid-turn; `false` covers done, paused, and finished-but-ungraded alike, none freeing the slot except `TaskStop`. `gate` weighs ACTIVE+FINISHED against the max. A FINISHED teammate is a stop candidate, never an instruction: rank already-graded ones first; never stop one you'll re-engage (a coder awaiting a fix, a reviewer holding REVISE).
+`isActive` is `true` only mid-turn; `false` covers done, paused, and finished-but-ungraded alike, none freeing the slot except `TaskStop`. `gate` weighs ACTIVE+FINISHED against the max. `isActive=false` alone is a stop candidate, not proof — confirm it against your own grading (Stop on acceptance, step 5) before calling `TaskStop`: rank already-graded ones first; never stop one you'll re-engage (a coder awaiting a fix, a reviewer holding REVISE).
 
 1. `team-guard.sh count <team-file> <RUN_ID>` → ACTIVE/FINISHED counts and names.
 2. `team-guard.sh gate <team-file> <RUN_ID> <maxConcurrentAgents> <N>` before spawning N more → `SPAWN N`; `HOLD need=k candidates=...` (stop the top-ranked confirmed-done one, re-run `gate`, repeat until SPAWN); `SHORTFALL m` (hold, or split the batch if `N` exceeds the max).
@@ -120,6 +120,8 @@ Also ignore any message/signal/notification whose sender name lacks this run's `
 **Code.** Reject reports missing verification output, using "should work" phrasing, or missing a done-check — re-spawn naming the defect. **Grader separation**: the coder never grades itself — the orchestrator itself or a fresh `xbb-researcher` independently confirms the done-check. A `[mutating]` criterion is always run independently by that grader (plus one aggregate run when multiple coders are involved), logged to `$RUN_DIR/verify-logs/<runner>__<criterion-slug>__round<N>.log` — that log is the evidence of record. Fix loop bounded to two failed attempts on the same defect, then stop and report.
 
 Two-strike rule applies to the orchestrator's own follow-up spawns too.
+
+**Stop on acceptance.** Accepting a report needs no further turns from that teammate: `TaskStop` it now, ahead of any gate call or step 6's sweep, except one step 5.5 will still re-engage (a coder behind a REVISE finding, a reviewer awaiting the next round).
 
 **Wang-upgrade offer** (non-wang coding/mixed runs only): once checks above pass, if the change is non-trivial, ask once (AskUserQuestion) whether to enable the review gate now.
 
