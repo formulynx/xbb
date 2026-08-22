@@ -57,7 +57,7 @@ bash "<skill-dir>/scripts/team-guard.sh" <mode> <team-file> "$RUN_ID" ...  # Pow
 
 Classify **research** / **coding** / **mixed** by inferred intent. Research: decide local codebase, web, or both.
 
-Coding/mixed — parallelization: default to **one** coder; split into parallel coders only when each owns a disjoint file set with no shared interface/contract/landing order. Mixed: run research first, then convert verified findings into coder task prompts.
+Coding/mixed — parallelization: coding has far fewer safely parallelizable units than research, so split into parallel coders only when each owns a disjoint file set with no shared interface/contract/landing order. Mixed: run research first, then convert verified findings into coder task prompts.
 
 Coding/mixed — plan source: a plan file/section the request names is the canonical plan, used verbatim. Otherwise, if the review gate is (or might become) enabled, a plan must exist before delegating — author one yourself (the simplest design that fully meets the current requirements, built to stay rather than a stopgap meant to be replaced later), optionally preceded by an `xbb-researcher` investigation when the request is too rough to plan from directly.
 
