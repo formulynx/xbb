@@ -82,7 +82,7 @@ Each teammate gets its own report file in `$RUN_DIR` (`xbbr-$RUN_ID-01.md`, …)
 
 Spawn independent teammates in one message; apply the Concurrency guard first.
 
-- **Researchers** (read-only): independent angles scaled to difficulty. Give: request verbatim, angle, output path, an evidence-citation instruction.
+- **Researchers** (read-only): independent angles scaled to difficulty — a simple lookup takes one; a hard or ambiguous question takes several (different subsystems, sources, or hypotheses), with no fixed cap. Give: request verbatim, angle, output path, an evidence-citation instruction.
 - **Coders** (scoped write): self-contained changes, each an exclusive write scope checked pairwise against every other coder's for overlap/shared interface — merge or sequence those, never parallel. Give: request verbatim (or verified findings, mixed mode), task, write scope, report path, artifact form.
 - **Every prompt states**: (a) a one-line `[read-only]`/`[mutating]` completion criterion (coders: a verification command); (b) the SendMessage address for STATUS — `team-lead`, or this invocation's own name if it is itself spawned, never `main`; (c) any earlier report path this stage needs (round-2 reviewer, a fixer). Don't restate what the agent's own file covers.
 
