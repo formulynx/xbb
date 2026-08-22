@@ -1,7 +1,7 @@
 ---
 name: xbb
 description: Orchestrator skill — delegates research to xbb-researcher and coding to xbb-coder, verifies their output. Use for /xbb research, questions, or implementation tasks.
-argument-hint: [--wang] [request] | config | clean
+argument-hint: [--wang] <request> | config [<args>] | clean
 ---
 
 # /xbb — delegated research & coding
