@@ -103,6 +103,8 @@ Also ignore any message/signal/notification whose sender name lacks this run's `
 
 **Reading reports.** A teammate's own `STATUS: DONE` is the sole trigger to read its file. Fallback: idle/termination notification with no STATUS ever sent → read the file directly; empty/missing → one re-poke via SendMessage before re-spawning.
 
+**Surface before acting.** Tell the user what a report or escalation said and what you decided, before ruling, asking, replying, or re-spawning on it.
+
 **Liveness invariant.** Presumed alive until a termination notification arrives, or it's confirmed absent from a readable team file — not a missing/empty report, "no STATUS yet", `ACTIVE 0`, or silence after a poke. Use `TaskList`/`TaskGet` for an authoritative liveness check if needed. Re-spawn only after a termination notification or a confirmed-absence check.
 
 **`NEEDS-INPUT` resolution**, in order:
@@ -138,7 +140,7 @@ Only when the gate is enabled. Loop up to `reviewMaxRounds` rounds.
 **VERDICT protocol.** First line exactly `VERDICT: PASS` or `VERDICT: REVISE`. Each REVISE finding: numbered, file-referenced, actionable, tagged **implementation defect** or **plan defect**, marked `[carried over from round N-1]` if it repeats an unresolved prior finding.
 
 **PASS** → proceed to step 6. **REVISE**:
-1. Post one status line (round number, finding counts by tag).
+1. Show the user one status line (round number, finding counts by tag).
 2. Plan-defect findings escalate immediately, bypassing re-fanout: apply step 4's escalation criterion, record the ruling as a neutralized plan-amendment disclosure.
 3. Implementation-defect findings become normal step-3 follow-up tasks (Concurrency guard applies); verify via step 5; start the next round by re-engaging the same reviewer identity.
 4. Keep looping while making progress. Stall = a finding `[carried over]` for a second consecutive round → stop auto-looping, ask the user once (Continue/Stop); re-arm after; a second stall on the same finding stops directly without asking again.
