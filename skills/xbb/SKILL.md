@@ -147,7 +147,7 @@ Only when the gate is enabled. Loop up to `reviewMaxRounds` rounds.
 3. Implementation-defect findings become normal step-3 follow-up tasks (Concurrency guard applies); verify via step 5; start the next round by re-engaging the same reviewer identity.
 4. Keep looping while making progress. Stall = a finding `[carried over]` for a second consecutive round → stop auto-looping, ask the user once (Continue/Stop); re-arm after; a second stall on the same finding stops directly without asking again.
 
-Rounds exhausted on REVISE, or the user chose Stop → stop the loop; report unresolved findings and that review did not pass.
+Rounds exhausted on REVISE, or the user chose Stop → stop the loop, proceed to step 6, then report unresolved findings and that review did not pass.
 
 **Claude reviewer path** (`reviewer` ∈ fable/opus/sonnet). Round 1: Concurrency guard, spawn `xbbrv-$RUN_ID-01` as `xbb-reviewer`, model overridden to the configured `reviewer`, with the round input, report path, Reviewer policy, VERDICT protocol, your teammate name. It inspects the working tree itself (git diff, tests, etc.) — you do not hand it a diff. PASS → step 6 like any teammate. REVISE → holds its round; next round's delta goes via SendMessage to the same teammate (guard-protected as re-engage-pending). Reclaimed before its next round → fresh `xbbrv-$RUN_ID-02` with the full first-round input, numbering continues.
 
