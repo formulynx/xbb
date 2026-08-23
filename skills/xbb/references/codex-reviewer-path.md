@@ -16,7 +16,8 @@ once, at the end.
   TEAM="xbb-$(basename "$PROJECT_ABS")-$(printf '%s' "$PROJECT_ABS" | cksum | cut -d' ' -f1)"
   CODEX_AGENT="xbbrv-$RUN_ID-reviewer"
   ```
-- **Preflight**: `bash "<skill-dir>/scripts/reviewer-spawn-preflight.sh"`. Non-zero → print stderr, abort per Timeout below. Ensure `~/.agents/skills/agmsg` exists (bootstrap from plugin-cache install.sh if needed).
+- **Bootstrap agmsg**: ensure `~/.agents/skills/agmsg` exists (bootstrap from plugin-cache install.sh if needed) — before preflight, which inspects the install.
+- **Preflight**: `bash "<skill-dir>/scripts/reviewer-spawn-preflight.sh"`. Non-zero → print stderr, abort per Timeout below. Covers the reviewer toolchain (codex present + logged in + app-server-capable, agmsg bridge-capable, node present), the sandbox spawn path, and a live app-server launch probe — everything checkable before codex's own thread exists. The one thing it cannot cover is the round-2+ bridge arming (role-session record); that is verified at runtime by round 1's ACK thread report below.
 - **Scratch cwd**: `mkdir -p "$HOME/.xbb/codex-cwd"` (a reused scratch dir outside the project, already trusted in `~/.codex/config.toml` from prior runs — no new trust step needed).
 - **Register the orchestrator**: `bash ~/.agents/skills/agmsg/scripts/whoami.sh "$(pwd)" claude-code`; join if `$TEAM` isn't listed: `bash ~/.agents/skills/agmsg/scripts/join.sh "$TEAM" team-lead claude-code "$(pwd)"`.
 - **Register the reviewer identity itself** (this design never calls `spawn.sh`, which used to do this internally — the reviewer must be joined explicitly before launch):
@@ -51,7 +52,7 @@ once, at the end.
 
 ## Timeout-abort
 
-Timeout at either deadline (any round) aborts the review, no fallback. If `$TMUX` is set, grab the recorded pane's tail for a launch-time cause — `tmux capture-pane -p -t "$(cat "$RUN_DIR/codex-reviewer-pane")" | tail -30` — reading the pane recorded at Launch (never re-derived via `agmsg_spawn_path`, which assumed a `spawn.sh` placement record this design never creates). Because the pane is never torn down between rounds, a timeout at round N > 1 can inspect the actual live state of a session that has been running the whole time, not just a just-launched one. Then run Teardown, report the cause (or that it's indeterminate, with next steps: `codex login status`, `/xbb config reviewer=fable`, retry later), and still deliver the completed work with review marked incomplete.
+Timeout at either deadline (any round) aborts the review, no fallback. If `$TMUX` is set, grab the recorded pane's tail for a launch-time cause — `tmux capture-pane -p -t "$(cat "$RUN_DIR/codex-reviewer-pane")" | tail -30` — reading the pane recorded at Launch (never re-derived via `agmsg_spawn_path`, which assumed a `spawn.sh` placement record this design never creates). Because the pane is never torn down between rounds, a timeout at round N > 1 can inspect the actual live state of a session that has been running the whole time, not just a just-launched one. Then run Teardown, report the cause (or that it's indeterminate, with next steps: `/xbb config reviewer=fable`, retry later — login/toolchain causes are already ruled out by preflight), and still deliver the completed work with review marked incomplete.
 
 ## Teardown (once, at the true end: PASS, rounds-exhausted, or timeout-abort)
 
