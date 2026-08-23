@@ -142,7 +142,7 @@ Only when the gate is enabled. Loop up to `reviewMaxRounds` rounds.
 **PASS** → proceed to step 6. **REVISE**:
 1. Show the user one status line (round number, finding counts by tag).
 2. Plan-defect findings escalate immediately, bypassing re-fanout: apply step 4's escalation criterion, record the ruling as a neutralized plan-amendment disclosure.
-3. Implementation-defect findings become normal step-3 follow-up tasks (Concurrency guard applies); verify via step 5; start the next round by re-engaging the same reviewer identity.
+3. Implementation-defect findings become normal step-3 follow-up tasks (Concurrency guard applies): re-engage the coder that owns the finding's write scope by SendMessage while it's still alive; only once confirmed absent does it become a fresh step-3 spawn (continuing numbering), briefed with that coder's own prior report. Verify via step 5; start the next round by re-engaging the same reviewer identity.
 4. Keep looping while making progress. Stall = a finding `[carried over]` for a second consecutive round → stop auto-looping, ask the user once (Continue/Stop); re-arm after; a second stall on the same finding stops directly without asking again.
 
 Rounds exhausted on REVISE, or the user chose Stop → stop the loop, proceed to step 6, then report unresolved findings and that review did not pass.
