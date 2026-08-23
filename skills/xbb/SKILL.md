@@ -88,7 +88,7 @@ Spawn independent teammates in one message; apply the Concurrency guard first.
 
 ### 4. Communicating with spawned teammates
 
-Tracking = STATUS signals + harness idle/termination notifications, nothing else. Never `ScheduleWakeup` to poll. No further tool call is needed while waiting — end the turn with plain text and let the notification arrive on its own.
+Tracking = STATUS signals + harness idle/termination notifications, nothing else. No further tool call is needed while waiting — end the turn with plain text and let the notification arrive on its own.
 
 **One outstanding message per recipient.** Do not send a teammate a
 second message before its reply arrives. It cannot read new mail
