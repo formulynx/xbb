@@ -28,13 +28,13 @@ Lazy-created by whichever mode reads it first (`mkdir -p ~/.xbb` + defaults belo
 ```json
 {
   "reviewer": "fable",
-  "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300 },
+  "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300, "tmuxLaunchMode": "split-window" },
   "maxConcurrentAgents": 4,
   "reviewMaxRounds": 8
 }
 ```
 
-`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`. `maxConcurrentAgents` bounds the Concurrency guard (steps 3/4/5.5). `reviewMaxRounds`/`reviewer` bound the wang gate (5.5).
+`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`. `maxConcurrentAgents` bounds the Concurrency guard (steps 3/4/5.5). `reviewMaxRounds`/`reviewer` bound the wang gate (5.5). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
 
 ## Concurrency guard (`maxConcurrentAgents`)
 
