@@ -46,7 +46,7 @@ Resolve `<team-file>` with `$RUN_ID` (step 3), reuse through step 6. Path is pro
 bash "<skill-dir>/scripts/team-guard.sh" <mode> <team-file> "$RUN_ID" ...  # PowerShell: team-guard.ps1
 ```
 
-`isActive` is `true` only mid-turn; `false` covers done, paused, and finished-but-ungraded alike, none freeing the slot except `TaskStop`. `gate` weighs ACTIVE+FINISHED against the max. `isActive=false` alone is a stop candidate, not proof — confirm it against your own grading (Stop on acceptance, step 5) before calling `TaskStop`: rank already-graded ones first; never stop one you'll re-engage (a coder awaiting a fix, a reviewer holding REVISE).
+`isActive` is `true` only mid-turn; `false` covers done, paused, and finished-but-ungraded alike, none freeing the slot except `TaskStop`. `gate` weighs ACTIVE+FINISHED against the max. `isActive=false` alone is a stop candidate, not proof — confirm it against your own grading in step 5 before calling `TaskStop`: rank already-graded ones first, and hold any you'll re-engage (a coder awaiting a fix, a reviewer holding REVISE) for step 5.5 or step 6 instead.
 
 1. `team-guard.sh count <team-file> <RUN_ID>` → ACTIVE/FINISHED counts and names.
 2. `team-guard.sh gate <team-file> <RUN_ID> <maxConcurrentAgents> <N>` before spawning N more → `SPAWN N`; `HOLD need=k candidates=...` (stop the top-ranked confirmed-done one, re-run `gate`, repeat until SPAWN); `SHORTFALL m` (hold, or split the batch if `N` exceeds the max).
@@ -121,8 +121,6 @@ Also ignore any message/signal/notification whose sender name lacks this run's `
 
 Two-strike rule applies to the orchestrator's own follow-up spawns too.
 
-**Stop on acceptance.** Accepting a report needs no further turns from that teammate: `TaskStop` it now, ahead of any gate call or step 6's sweep, except one step 5.5 will still re-engage (a coder behind a REVISE finding, a reviewer awaiting the next round).
-
 **Wang-upgrade offer** (non-wang coding/mixed runs only): once checks above pass, if the change is non-trivial, ask once (AskUserQuestion) whether to enable the review gate now.
 
 ### 5.5. Wang review gate
@@ -161,7 +159,7 @@ or timeout-abort — via step 6 at run end).
 
 ### 6. Shut down, then answer
 
-Once step 5 (and, if enabled, the 5.5 loop) has fully resolved and every teammate is DONE/abandoned: **re-resolve** `<team-file>`/`RUN_ID` exactly as the Concurrency guard does (never a remembered/cached name list), run `team-guard.sh sweep <team-file> <RUN_ID>` (PowerShell: `team-guard.ps1 sweep <team-file> <RUN_ID>`), and `TaskStop` every printed name. The codex reviewer is killed via its own round-cleanup script instead, and never appears in the sweep.
+Once step 5 (and, if enabled, the 5.5 loop) has fully resolved and every teammate is DONE/abandoned: **re-resolve** `<team-file>`/`RUN_ID` exactly as the Concurrency guard does (never a remembered/cached name list), run `team-guard.sh sweep <team-file> <RUN_ID>` (PowerShell: `team-guard.ps1 sweep <team-file> <RUN_ID>`), and `TaskStop` every printed name. Grading a report in step 5 records acceptance; the actual `TaskStop` for that teammate happens here, or earlier if the Concurrency guard's `gate` `HOLD` path already freed its slot mid-run. The codex reviewer is killed via its own round-cleanup script instead, and never appears in the sweep.
 
 ### 7. Answer
 
