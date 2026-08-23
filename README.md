@@ -1,364 +1,69 @@
 # xbb
 
-`xbb` is a delegated research & coding orchestrator skill for
-[Claude Code](https://claude.com/product/claude-code).
+`/xbb` is a delegated research & coding orchestrator skill.
 
 ## Why "xbb"?
 
-The name nods to Xu Bingbing, a character in Liu Cixin's sci-fi novel *The
-Three-Body Problem*, known for getting through the work of ten people. `xbb`
-fans a request out to many subagents in parallel, so it feels like ten
-people are on the job at once.
+The name originates from Xu Bingbing, a character from Liu Cixin's *The Three-Body
+Problem*, known for doing the work of ten people.  
+`/xbb` fans a request out to many subagents at once, evoking that same effect.
+
+## Install
+
+```
+# macOS / Linux / WSL / Git Bash — quick install (curl | bash)
+curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.0-beta7/install.sh | bash
+
+# Native Windows (PowerShell) — quick install
+irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.0-beta7/install.ps1 | iex
+```
+
+- Use `@main` for latest dev code
+- Update by re-running the one-liner with a newer tag (or @main)
+- Uninstall with `--uninstall` ( `-Uninstall` on the .ps1)
+- For dev, git clone and run `xbb/install.sh` (symlinks instead of copies)
 
 ## Usage
 
-Inside a Claude Code session, invoke:
+The request can be a research question, a coding task, or both mixed together.
 
 ```
-/xbb [your request]
-/xbb --wang [your request]
+/xbb <your request>              # plain run
+/xbb --wang <your request>       # adds an external review gate
 ```
 
-- The request can be a research question, a coding task, or both mixed
-  together.
-- The skill classifies it automatically, fans it out to `xbb-researcher` /
+- `xbb` classifies it automatically, fans it out to `xbb-researcher` /
   `xbb-coder` subagents, and reports back with verified findings or diffs.
+- `--wang` adds a blind external review: a reviewer re-verifies the work
+  against the plan and returns `VERDICT: PASS` or `VERDICT: REVISE`, looping
+  (up to `reviewMaxRounds`, see [Configuration](#configuration)) until it
+  passes or stalls, then reports the review outcome alongside the results.
 
-### External review: `--wang`
-
-`--wang` runs the same orchestrated flow as a plain `/xbb` request, then
-adds an external review gate.
-
-Behavior:
-
-- Blind review: the reviewer never sees the implementers' self-reports, so
-  an inflated or hallucinated "done" claim can't sway the verdict.
-- The reviewer re-runs verification itself rather than trusting anyone
-  else's report.
-- Findings that turn out to be plan problems rather than implementation
-  problems are escalated to you directly, instead of burning rounds on
-  re-fanout that can't fix them.
-- The loop keeps going automatically only while rounds make progress; if
-  the same finding survives two consecutive rounds unresolved, xbb pauses
-  and asks whether to continue, stop, or adjust course with guidance for
-  the next round.
-- Capped at `reviewMaxRounds` (default `8`, see `/xbb config` below).
-
-Flow:
-
-1. Teammates investigate and/or implement, same as a plain `/xbb` run.
-2. Once they finish, a reviewer judges the resulting working tree against
-   the **plan** (a plan file named in your request, e.g. "follow the plan
-   in PLAN.md §3", or, when none exists, a plan xbb writes down before
-   delegating) plus your original request.
-3. The reviewer returns `VERDICT: PASS` or `VERDICT: REVISE` with findings.
-4. On `REVISE`, the orchestrator re-delegates fixes to teammates and loops
-   back to step 2.
-5. The final answer reports the review outcome alongside the normal
-   results.
-
-### Configuration: `/xbb config`
+### Configuration
 
 ```
 /xbb config
+/xbb config [args]
 ```
 
-Opens an interactive settings menu (arrow-key selection).
+No args for an interactive settings menu
+- Stored in `~/.xbb/config.json`, created on first use and preserved across reinstalls
+- `maxConcurrentAgents` for parallelizations control
+- Settings include which reviewer judges `--wang` rounds
+  - `fable` by default, or `opus`/`sonnet`/`codex`
+  - the `model` / `effort` / `timeouts` for the `codex` reviewer
+  - `reviewMaxRounds`
+- Using `reviewer=codex` requires
+  - Codex CLI: `npm install -g @openai/codex`, then `codex login`
+  - agmsg: the messaging bridge to it, already set up
 
-Settings live in `~/.xbb/config.json`, created on first use with the
-defaults below, and survive reinstalling or updating xbb:
-
-```json
-{
-  "reviewer": "fable",
-  "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300 },
-  "maxConcurrentAgents": 4,
-  "reviewMaxRounds": 8
-}
-```
-
-| Setting | Required/Optional | Description |
-|---|---|---|
-| `reviewer` | Required | Who judges `/xbb --wang` rounds. `fable` (default), `opus`, or `sonnet` spawn a Claude reviewer subagent (`agents/xbb-reviewer.md`), with the model chosen at spawn time. `codex` instead spawns an external OpenAI Codex CLI session reached over agmsg. See prerequisites below. |
-| `codex.model` / `codex.effort` | Optional | Model and reasoning effort passed to the Codex CLI session when `reviewer=codex`. |
-| `codex.pingTimeoutSec` / `codex.replyTimeoutSec` | Optional | How long to wait for the Codex session to acknowledge a round, or return a verdict, before treating it as unresponsive. |
-| `maxConcurrentAgents` | Required | Cap on subagents running in parallel. |
-| `reviewMaxRounds` | Required | Cap on `/xbb --wang` review/fix loops before giving up and reporting the review as incomplete. |
-
-#### Codex reviewer prerequisites
-
-Selecting `reviewer=codex` in `/xbb config` checks, once, that both of these
-are in place, refusing the config change with setup instructions if either
-is missing:
-
-- The Codex CLI: `npm install -g @openai/codex`, then `codex login`. (This
-  is the **scoped** `@openai/codex` package. The unscoped `codex` package
-  on npm is an unrelated project.)
-- agmsg, the messaging bridge to the Codex session: `/plugin marketplace add
-  fujibee/agmsg` + `/plugin install agmsg@fujibee-agmsg`, or agmsg's own
-  `install.sh`.
-
-At review time, xbb spawns the Codex reviewer per round with `--sandbox
-workspace-write` (scoped to a fixed scratch directory reused across every
-run, never the reviewed project; `read-only` would also block its own
-`send.sh` call back to agmsg) and the configured model/effort; its replies
-travel over agmsg messages. If it stops answering partway through (rate
-limit or API error, the two are indistinguishable from outside), the run
-aborts the review loop, keeps all work completed so far, and reports the
-review as incomplete with next steps, rather than retrying indefinitely.
-
-Because that scratch directory is fixed and reused, the first time
-`reviewer=codex` spawns a review, the Codex CLI itself shows a one-time "Do
-you trust the contents of this directory?" prompt in its pane. Answer it
-once; every later round and run reuses the same, by-then-trusted directory
-and never shows it again.
-
-**Terminal behavior for the codex reviewer**: inside tmux (including a
-tmux-backed cmux session such as `cmux claude-teams`, where `$TMUX` is set),
-it opens as a new tmux pane (agmsg always prefers this path when `$TMUX` is
-set). In a cmux frontend *without* a tmux backend (`CMUX_SOCKET_PATH` set,
-`$TMUX` not), it opens as a split surface in the current workspace via a
-helper script that ships with the skill install,
-`scripts/cmux-spawn-split.sh`. Otherwise, a new OS terminal window opens per
-review round; outside cmux/tmux these windows are not auto-closed, a known
-limitation.
-
-#### Codex reviewer under the Bash sandbox
-
-When Claude Code's Bash sandbox is enabled and the session runs inside tmux
-or a tmux-backed cmux, spawning the codex reviewer goes through the tmux
-client, which connects to a **unix socket**, and the sandbox blocks unix
-socket connections by default. The spawn then fails with:
-
-```
-Error: Failed to connect to socket at ~/.local/state/cmux/cmux.sock (Operation not permitted, errno 1)
-```
-
-The fix is a one-time allowlist entry in `~/.claude/settings.json`. On
-macOS, `sandbox.network.allowUnixSockets` matches paths as literal
-subpaths, not shell globs. This isn't documented by Claude Code, so a
-wildcard entry like `"~/.local/state/cmux/*.sock"` silently never matches
-and the socket stays blocked. Use the containing directory itself, with no
-wildcard: Seatbelt's subpath semantics cover everything underneath it
-(adjust if your error names a different socket path, e.g. plain tmux's
-`/private/tmp/tmux-<uid>/`):
-
-```json
-"sandbox": {
-  "network": {
-    "allowUnixSockets": [
-      "~/.local/state/cmux"
-    ]
-  }
-}
-```
-
-Then **start a new Claude Code session**. Sandbox config is fixed at
-session start and does not reload mid-session.
-
-Under a tmux-backed cmux specifically, the spawn also writes cmux's own
-tmux-compat store (`~/.cmuxterm/tmux-compat-store.json`), staged first as a
-temp file in the per-user temp directory before being renamed into place,
-so `sandbox.filesystem.allowWrite` needs entries for both paths as well:
-
-```json
-"sandbox": {
-  "filesystem": {
-    "allowWrite": [
-      "~/.cmuxterm",
-      "/var/folders/<uid-hash>/T"
-    ]
-  }
-}
-```
-
-The literal per-user temp path (`getconf DARWIN_USER_TEMP_DIR`) is required,
-not a glob, since it follows the same subpath semantics as above and takes
-effect only in a new session.
-
-A wang-mode run with `reviewer=codex` checks this up front
-(`scripts/reviewer-spawn-preflight.sh`, a one-command probe of the exact
-launch path agmsg will take) and stops with these instructions *before*
-spawning any teammates if the socket is still blocked. It never disables
-the sandbox to force the spawn through. Once the setting is in place, the
-probe passes silently on every later run. Environments that don't hit the
-sandbox skip the issue: non-tmux terminals (macOS Terminal, VS Code) launch
-via the OS outside the sandboxed process tree, and Windows has no Bash
-sandbox.
-
-#### Files created at runtime
-
-xbb writes a couple of things under `~/.xbb/` as needed, not part of the
-installer payload or touched by `--uninstall`:
-
-- `config.json`: settings, see [Configuration](#configuration-xbb-config).
-- `codex-cwd/`: the Codex reviewer's fixed scratch working directory (see
-  above); empty, reused across every run, never the reviewed project.
-
-The codex reviewer's per-round spawn options and surface marker live under
-that run's own `$TMPDIR/xbb-run-<id>/` directory instead (see
-[Housekeeping](#housekeeping-xbb-clean)), scoped per run so concurrent
-`/xbb --wang` runs never share, and therefore never race on, the same file.
-
-To remove `~/.xbb` (settings included), run `rm -rf ~/.xbb`.
-
-### Housekeeping: `/xbb clean`
-
-Each run writes its subagent hand-off files to a per-run temp directory
-(`$TMPDIR/xbb-run-<id>/`, or the equivalent temp root on Linux/Windows) and
-never deletes them. They're a small audit trail of what past runs
-investigated, and normal runs do no cleanup (zero overhead). Your OS's temp
-reaper clears them eventually, so you can ignore this if you don't mind the
-disk use.
-
-To trim them yourself, run:
+### Housekeeping
 
 ```
 /xbb clean
 ```
 
-It lists the leftover run directories with their sizes and total, then asks
-before deleting anything: pick **Delete all** to reclaim the space or
-**Keep** to leave them to the OS. It only ever touches `xbb-run-*`
-directories. Works on macOS/Linux (and Windows Git Bash) as well as native
-Windows PowerShell.
-
-## Install
-
-Pick the installer for your shell:
-
-- **macOS / Linux / WSL / Git Bash** (any POSIX shell) → `install.sh` (below).
-- **Native Windows** (PowerShell or cmd, no POSIX shell) → `install.ps1`
-  ([PowerShell install](#powershell-install-native-windows)).
-
-On Git Bash, prefer `install.sh`'s curl | bash method: it *copies* the files,
-whereas its git-clone method relies on symlinks (`ln -s`), which Git Bash does
-not create reliably. WSL has no such caveat. `install.ps1` always copies.
-
-### Quick install (curl | bash via jsDelivr)
-
-```sh
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.0-beta7/install.sh | bash
-```
-
-This fetches `skills/xbb/SKILL.md`, its `scripts/` helpers, and the three
-`agents/xbb-*.md` files from jsDelivr's GitHub CDN and copies them into
-`~/.claude/`. It creates no local clone. Restart your Claude Code session
-afterwards.
-
-Before piping a remote script into `bash`, inspect it first: `curl -fsSL
-<same-url> -o install.sh && less install.sh && bash install.sh`. The
-one-liner above is pinned to a released tag (`@v0.3.0-beta7`) so installs stay
-reproducible: jsDelivr caches tags/commits effectively forever. Each release
-updates this README to point at the new tag; if you want the latest
-in-development code instead, substitute `@main` (a moving ref, cached by
-jsDelivr for ~12h).
-
-### git clone (for development / contributors)
-
-```sh
-git clone <repo-url> xbb
-xbb/install.sh
-```
-
-This symlinks `skills/xbb` and `agents/xbb-researcher.md` /
-`agents/xbb-coder.md` / `agents/xbb-reviewer.md` from the clone into
-`~/.claude/`. Restart your Claude Code session afterwards.
-
-If `~/.claude/skills/xbb` or `~/.claude/agents/xbb-researcher.md` /
-`xbb-coder.md` / `xbb-reviewer.md` already exist as real files, not
-symlinks (e.g. from a previous manual install), back them up or remove them
-before running `install.sh`; it will refuse to overwrite real files and
-exit with an error. (This guard only applies to the clone/symlink method;
-the curl|bash method copies files and overwrites its own prior copies
-freely.)
-
-You can install into a different Claude config directory by setting
-`CLAUDE_DIR` before running the script, e.g. `CLAUDE_DIR=/path/to/dir
-xbb/install.sh`.
-
-### PowerShell install (native Windows)
-
-For native Windows without a POSIX shell, use the PowerShell installer. Quick
-install:
-
-```powershell
-irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.0-beta7/install.ps1 | iex
-```
-
-Or from a git clone:
-
-```powershell
-.\xbb\install.ps1
-```
-
-`install.ps1` mirrors `install.sh`'s payload into `~\.claude\`: `SKILL.md`,
-the three agent files, and `team-guard.ps1` in place of `install.sh`'s
-POSIX-only scripts (the codex reviewer and cmux support they back don't
-apply on native Windows), but always **copies** (no symlinks; those need
-admin/Developer Mode on Windows). It's idempotent and honours the same
-`CLAUDE_DIR`, `XBB_REF`, and `XBB_BASE_URL` environment variables. To inspect
-before running, download first: `irm <same-url> -OutFile install.ps1;
-notepad install.ps1; .\install.ps1`.
-
-If PowerShell blocks the script with an execution-policy error, run it for the
-current process only: `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
-
-## Update
-
-If you installed via curl | bash, re-running the same pinned one-liner
-reinstalls the same `v0.3.0-beta7` copies; it does not fetch newer code. To
-upgrade, run the one-liner for the newer release tag (swap `@v0.3.0-beta7` for the
-new tag), or use `@main` for the latest in-development version:
-
-```sh
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.0-beta7/install.sh | bash
-```
-
-If you installed via git clone, pull the repo instead:
-
-```sh
-git -C xbb pull
-```
-
-`SKILL.md` changes take effect immediately (next `/xbb` invocation). New or
-changed agent files (e.g. `xbb-reviewer.md`) are loaded at session start, so
-start a new Claude Code session after installing or updating to pick them
-up.
-
-## Uninstall
-
-```sh
-xbb/install.sh --uninstall
-```
-
-(or, if installed via curl | bash without keeping the script around, fetch
-it again first: `curl -fsSL
-https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.0-beta7/install.sh | bash -s --
---uninstall`). This works for both the symlink and copy install methods.
-
-On native Windows, download `install.ps1` and run it with `-Uninstall`:
-
-```powershell
-irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.0-beta7/install.ps1 -OutFile install.ps1
-.\install.ps1 -Uninstall
-```
-
-Alternatively, remove the four paths manually (`~/.claude/skills/xbb` is a
-symlink if you installed via git clone, or a real directory if you
-installed via curl | bash, hence `-rf`):
-
-```sh
-rm -rf ~/.claude/skills/xbb
-rm ~/.claude/agents/xbb-researcher.md
-rm ~/.claude/agents/xbb-coder.md
-rm ~/.claude/agents/xbb-reviewer.md
-```
-
-None of the above touches `~/.xbb/` (config and the codex scratch cwd, see
-[Files created at runtime](#files-created-at-runtime)); the uninstaller
-intentionally leaves it so your settings survive reinstalls. To remove
-settings too: `rm -rf ~/.xbb`.
+Review and optionally delete subagent hand-off files under `$TMPDIR/xbb-run-<id>/`.
 
 ## License
 
