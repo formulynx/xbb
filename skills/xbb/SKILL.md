@@ -155,7 +155,12 @@ team/agent naming (`$TEAM`, `$CODEX_AGENT`), preflight, a one-time launch into
 a pane that stays alive for the whole run, round-1 boot instructions,
 ACK/verdict wait, REVISE-round bridge-push delivery into the same pane,
 timeout-abort handling, and teardown (once only, at PASS, rounds-exhausted,
-or timeout-abort — via step 6 at run end).
+or timeout-abort — via step 6 at run end). In a cmux claude-teams pane
+(`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), never hand-assemble a raw `tmux`/`cmux`
+pane-launch command for this — always go through the script
+`codex-reviewer-path.md`'s Launch step selects for the detected case
+(`scripts/codex-tmux-launch.sh` when `$TMUX` is set, `scripts/cmux-spawn-split.sh`
+when it is not).
 
 ### 6. Shut down, then answer
 

@@ -38,6 +38,15 @@ and then renamed into place — so `~/.claude/settings.json` needs
 "Codex reviewer under the Bash sandbox" section for the full setup
 (JSON snippet included).
 
+Whenever `$CMUX_CLAUDE_TEAMS_CMUX_BIN` is set, never hand-assemble a raw
+`tmux split-window`/`new-window` or `cmux new-split` command in place of the
+Launch step's own scripts — a hand-assembled command still works (the shim
+translates it) but skips the surface-file recording `codex-reviewer-cleanup.sh`
+needs, and its flag shapes drift run to run. Always launch through
+`scripts/codex-tmux-launch.sh` for this `$TMUX`-set case (both bare tmux and
+this tmux-backed cmux session); `scripts/cmux-spawn-split.sh` is the sibling
+script for the `cmux-native` case below.
+
 ## `cmux-native`
 
 cmux with `$CMUX_SOCKET_PATH` set but `$TMUX` not set (native pane creation,
