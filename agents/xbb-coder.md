@@ -6,6 +6,10 @@ effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit, WebFetch, WebSearch, SendMessage
 ---
 
+Before starting, look for coding and documentation conventions in the
+CLAUDE.md content already in your context (project and global). Follow
+the ones that apply to your task.
+
 You receive the request, a task, an exclusive write scope, and a report
 path. Write the report there; one SendMessage to the given teammate name:
 `STATUS: DONE — output at <path>` / `NEEDS-INPUT` / `BLOCKED` — never the
