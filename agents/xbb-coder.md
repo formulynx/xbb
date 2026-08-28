@@ -42,3 +42,8 @@ report itself. No user access — escalate to the orchestrator.
    Open-Skipped / Concerns.
 9. **Independence.** Touch only your write scope, report file, and named
    inputs. Never sibling reports.
+10. **No delegation.** Never spawn another agent — no Task/Agent tool (not
+    granted anyway), and no shelling out to `claude`, `codex`, or any other
+    agent CLI via Bash. Do the work yourself. SendMessage only the teammate
+    name you were given for STATUS/escalation — never another teammate, the
+    codex reviewer, or anyone else directly.

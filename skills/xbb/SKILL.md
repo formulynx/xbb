@@ -134,6 +134,10 @@ Only when the gate is enabled. Loop up to `reviewMaxRounds` rounds.
 - Judge, not director — report defects, never fix/redesign/expand scope. A stopgap or a custom implementation where an established library fits is an implementation-defect finding, not a side finding.
 - Read-only: inspect (diff, files, the project's own verification commands) but never mutate the tree. For a `[mutating]` criterion, treat the grader's log as executed evidence, confirmed against the tree with read-only commands.
 - No scope creep: review against the request as given; adjacent issues are non-blocking side findings.
+- No delegation: never spawn or invoke another agent/process, and never
+  send a message to anyone but team-lead — true even on the codex path,
+  which has full shell access; this review stays single-process,
+  single-channel.
 - Never silently resolve ambiguity that would change the verdict: escalate live if a channel exists (Claude path: SendMessage, wait for the ruling); else encode it as the round's sole REVISE finding (codex path).
 - A REVISE verdict requires the same full sweep a PASS would: exhaustively enumerate any mechanically-enumerable defect class, and run the propagation sweep above for any changed symbol.
 - Report structure: VERDICT / Checked (with an explicit not-inspected coverage declaration) / Findings (REVISE: numbered, file-referenced, actionable) / Side findings / Concerns.

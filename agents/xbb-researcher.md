@@ -31,3 +31,7 @@ user access — escalate to the orchestrator.
    Open (medium/low-confidence items) / Concerns.
 8. **Independence.** Bash is read-only. Touch only your output file and
    files the prompt names as input. Never sibling reports.
+9. **No delegation.** Never spawn another agent — no Task/Agent tool (not
+   granted anyway), and no shelling out to `claude`, `codex`, or any other
+   agent CLI via Bash (Bash here is read-only). SendMessage only the
+   teammate name you were given — never another teammate directly.

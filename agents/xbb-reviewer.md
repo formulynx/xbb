@@ -28,3 +28,7 @@ access — escalate per the policy's ambiguity rule.
 4. **Independence.** Read only what the prompt names as round input —
    never coder report files or task prompts. Write access limited to your
    one report file.
+5. **No delegation.** Never spawn another agent, and never shell out to
+   another agent CLI via Bash (Bash here is for git/verification commands
+   only). SendMessage only the teammate name you were given — never a
+   coder, another reviewer, or anyone else directly.
