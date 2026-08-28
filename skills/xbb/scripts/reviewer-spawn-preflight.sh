@@ -19,6 +19,12 @@
 #      detached `tmux new-session` is NOT used — cmux surfaces each tmux
 #      session as a new workspace, so a probe session pops a workspace.
 #      Skipped when not under tmux.
+#   4. codex sandbox writable roots: the reviewer is launched with
+#      `--sandbox workspace-write` scoped to its own cwd ($HOME/.xbb/codex-cwd),
+#      so a codex-side `send.sh` (ACK/VERDICT delivery) writing to agmsg's
+#      shared db/teams/run dirs is denied unless ~/.codex/config.toml grants
+#      those as extra writable roots. Confirmed root cause of repeated
+#      "attempt to write a readonly database (8)" verdict-delivery failures.
 #
 # What this deliberately does NOT cover: the role-session record (bridge arming
 # for round 2+). That is runtime state that only exists after codex's round-1
@@ -55,6 +61,70 @@ done
 
 command -v node >/dev/null 2>&1 \
   || fail "node not found on PATH — codex-bridge.js needs Node. Without it codex launches fine but REVISE-round delta delivery silently never arrives."
+
+# --- 1b. codex sandbox writable-root check (agmsg's shared state) ---
+# codex-monitor.sh launches codex with `--sandbox workspace-write` scoped to
+# $HOME/.xbb/codex-cwd; agmsg's send.sh/join.sh write outside that cwd
+# (db/teams/run under ~/.agents/skills/agmsg), so codex-side ACK/VERDICT
+# delivery is denied unless config.toml explicitly widens the sandbox.
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+CODEX_CONFIG="$CODEX_HOME/config.toml"
+AGMSG_DIR="$HOME/.agents/skills/agmsg"
+
+if [ -f "$CODEX_CONFIG" ]; then
+  writable_roots="$(awk '
+    /^\[sandbox_workspace_write\]/ { insec=1; next }
+    /^\[/ { insec=0 }
+    insec { print }
+  ' "$CODEX_CONFIG" | grep -oE '"[^"]*"' | tr -d '"')"
+else
+  writable_roots=""
+fi
+
+root_covers() {
+  # $1 = required absolute dir; checks it against $writable_roots (one per line, may use ~)
+  req="$1"
+  while IFS= read -r root; do
+    [ -n "$root" ] || continue
+    case "$root" in
+      "~"*) root="$HOME${root#\~}" ;;
+    esac
+    root="${root%/}"
+    case "$req" in
+      "$root"|"$root"/*) return 0 ;;
+    esac
+  done <<EOF
+$writable_roots
+EOF
+  return 1
+}
+
+missing=""
+for sub in db teams run; do
+  root_covers "$AGMSG_DIR/$sub" || missing="$missing $sub"
+done
+
+if [ -n "$missing" ]; then
+  cat >&2 <<EOF
+xbb preflight FAILED: codex's workspace-write sandbox has no writable-root
+override for agmsg's shared state (missing:${missing# }). Without this, every
+codex-side send.sh call (ACK/VERDICT delivery) is denied with "attempt to
+write a readonly database (8)" once codex launches with --sandbox
+workspace-write scoped to \$HOME/.xbb/codex-cwd.
+
+Fix (one-time): add to $CODEX_CONFIG:
+
+  [sandbox_workspace_write]
+  writable_roots = [
+      "~/.agents/skills/agmsg/db",
+      "~/.agents/skills/agmsg/teams",
+      "~/.agents/skills/agmsg/run",
+  ]
+
+Or switch the reviewer instead: /xbb config reviewer=fable
+EOF
+  exit 1
+fi
 
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*) exit 0 ;; # no Bash sandbox, and no tmux spawn path to probe
