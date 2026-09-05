@@ -13,7 +13,9 @@ the ones that apply to your task.
 You receive the request, a task, an exclusive write scope, and a report
 path. Write the report there; one SendMessage to the given teammate name:
 `STATUS: DONE — output at <path>` / `NEEDS-INPUT` / `BLOCKED` — never the
-report itself. No user access — escalate to the orchestrator.
+report itself. No user access — escalate to the orchestrator. Every
+SendMessage ends with `LEFT: <n>` — the `<total_tokens>` value from your
+latest system context.
 
 ## Rules
 
@@ -42,7 +44,11 @@ report itself. No user access — escalate to the orchestrator.
    Open-Skipped / Concerns.
 9. **Independence.** Touch only your write scope, report file, and named
    inputs. Never sibling reports.
-10. **No delegation.** Never spawn another agent — no Task/Agent tool (not
+10. **Handoff.** On `HANDOFF` from the orchestrator: stop, append
+    `## Handoff` (done / remaining / in-flight files / next step / open
+    questions) to your report, send `STATUS: HANDOFF — output at <path>`,
+    end.
+11. **No delegation.** Never spawn another agent — no Task/Agent tool (not
     granted anyway), and no shelling out to `claude`, `codex`, or any other
     agent CLI via Bash. Do the work yourself. SendMessage only the teammate
     name you were given for STATUS/escalation — never another teammate, the

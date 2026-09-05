@@ -49,6 +49,9 @@ The request can be a research question, a coding task, or both mixed together.
 No args for an interactive settings menu
 - Stored in `~/.xbb/config.json`, created on first use and preserved across reinstalls
 - `maxConcurrentAgents` for parallelizations control
+- `handoffMinTokensLeft` (default 300000): a subagent reporting fewer remaining
+  context tokens than this is told to hand off, and a fresh one continues from
+  its handoff report
 - Settings include which reviewer judges `--wang` rounds
   - `fable` by default, or `opus`/`sonnet`/`codex`
   - the `model` / `effort` / `timeouts` for the `codex` reviewer

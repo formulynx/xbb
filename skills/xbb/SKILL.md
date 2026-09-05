@@ -30,11 +30,12 @@ Lazy-created by whichever mode reads it first (`mkdir -p ~/.xbb` + defaults belo
   "reviewer": "fable",
   "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300, "tmuxLaunchMode": "split-window" },
   "maxConcurrentAgents": 4,
-  "reviewMaxRounds": 8
+  "reviewMaxRounds": 8,
+  "handoffMinTokensLeft": 300000
 }
 ```
 
-`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`. `maxConcurrentAgents` bounds the Concurrency guard (steps 3/4/5.5). `reviewMaxRounds`/`reviewer` bound the wang gate (5.5). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
+`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`. `maxConcurrentAgents` bounds the Concurrency guard (steps 3/4/5.5). `reviewMaxRounds`/`reviewer` bound the wang gate (5.5). `handoffMinTokensLeft` is the Context cap threshold (step 4). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
 
 ## Concurrency guard (`maxConcurrentAgents`)
 
@@ -92,6 +93,8 @@ Spawn independent teammates in one message; apply the Concurrency guard first.
 Tracking = STATUS signals + harness idle/termination notifications, nothing else. No further tool call is needed while waiting — end the turn with plain text and let the notification arrive on its own.
 
 Never wait actively: no ScheduleWakeup, Monitor, sleep, cron/loop, or TaskOutput/TaskList polling to check on a teammate. Completion arrives as a STATUS message or termination notification; end the turn and react when it lands.
+
+**Context cap.** Every researcher/coder message carries `LEFT: <n>` (its remaining context tokens). `LEFT` < `handoffMinTokensLeft`: if the message is DONE, grade normally but never re-engage that teammate (fix rounds go to a fresh spawn); otherwise reply with the single word `HANDOFF`. On `STATUS: HANDOFF`, surface it, then spawn a fresh teammate of the same type (numbering continues) with the original prompt plus the handoff report path as a named input.
 
 **One outstanding message per recipient.** Do not send a teammate a
 second message before its reply arrives. It cannot read new mail
@@ -204,7 +207,7 @@ Opt-in trim of run directories; temp root resolution matches step 3.
 ## `config` mode
 
 1. **No args**: one AskUserQuestion call with Q1 "Reviewer" (`fable`/`opus`/`sonnet`/`codex`, current suffixed) and Q2 "Max agents" (`2`/`4`/`8`, current suffixed; "Other" free-text is automatic — never add your own Other option). If Q1 = `codex`, a second call: Q1 "Codex model" (`gpt-5.6-terra`/`gpt-5.6`), Q2 "Effort" (`low`/`medium`/`high`/`xhigh`).
-2. **With `key=value` args**: apply directly, no questions — except `reviewer` must validate against `fable`/`opus`/`sonnet`/`codex` first; an invalid value is rejected (report it, keep the previous `reviewer`) rather than saved.
+2. **With `key=value` args**: apply directly, no questions — `handoffMinTokensLeft` must be a positive integer; `reviewer` must validate against `fable`/`opus`/`sonnet`/`codex` first; an invalid value is rejected (report it, keep the previous `reviewer`) rather than saved.
 3. **Codex preflight**, only when the new `reviewer` is `codex`, before saving:
    - `command -v codex` and `codex --version` matches `codex-cli X.Y.Z`.
    - `codex login status` exits 0.
