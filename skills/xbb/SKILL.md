@@ -91,6 +91,8 @@ Spawn independent teammates in one message; apply the Concurrency guard first.
 
 Tracking = STATUS signals + harness idle/termination notifications, nothing else. No further tool call is needed while waiting — end the turn with plain text and let the notification arrive on its own.
 
+Never wait actively: no ScheduleWakeup, Monitor, sleep, cron/loop, or TaskOutput/TaskList polling to check on a teammate. Completion arrives as a STATUS message or termination notification; end the turn and react when it lands.
+
 **One outstanding message per recipient.** Do not send a teammate a
 second message before its reply arrives. It cannot read new mail
 mid-turn. Hold any new information until the reply lands, then send
