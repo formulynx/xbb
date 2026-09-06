@@ -12,10 +12,10 @@ Problem*, known for doing the work of ten people.
 
 ```sh
 # macOS / Linux / WSL / Git Bash — quick install (curl | bash)
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.2/install.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.3/install.sh | bash
 
 # Native Windows (PowerShell) — quick install
-irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.2/install.ps1 | iex
+irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.3/install.ps1 | iex
 ```
 
 - Use `@main` for latest dev code
