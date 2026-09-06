@@ -10,7 +10,7 @@ Problem*, known for doing the work of ten people.
 
 ## Install
 
-```
+```sh
 # macOS / Linux / WSL / Git Bash — quick install (curl | bash)
 curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.2/install.sh | bash
 
@@ -27,7 +27,7 @@ irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.2/install.ps1 | iex
 
 The request can be a research question, a coding task, or both mixed together.
 
-```
+```sh
 /xbb <your request>              # plain run
 /xbb --wang <your request>       # adds an external review gate
 ```
@@ -41,7 +41,7 @@ The request can be a research question, a coding task, or both mixed together.
 
 ### Configuration
 
-```
+```sh
 /xbb config
 /xbb config [args]
 ```
@@ -62,7 +62,7 @@ No args for an interactive settings menu
 
 ### Housekeeping
 
-```
+```sh
 /xbb clean
 ```
 
