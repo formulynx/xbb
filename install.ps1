@@ -39,7 +39,9 @@ $SkillDir  = Join-Path $SkillsDir 'xbb'
 # so they're excluded too. team-guard.ps1 backs the Concurrency guard, which
 # applies regardless of OS, so it is. codex-launch.md and
 # codex-reviewer-path.md are plain reference text (no POSIX dependency) so
-# they ship despite backing a POSIX-only feature.
+# they ship despite backing a POSIX-only feature. context-left.sh (bash+jq,
+# no .ps1 twin) is excluded the same way: a native-PowerShell teammate has no
+# context-check step until one is written.
 $Payload = @(
   @{ Src = 'skills/xbb/SKILL.md';          Dest = (Join-Path $SkillDir  'SKILL.md') }
   @{ Src = 'skills/xbb/scripts/team-guard.ps1'; Dest = (Join-Path $SkillDir 'scripts/team-guard.ps1') }
