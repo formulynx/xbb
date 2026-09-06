@@ -49,9 +49,12 @@ The request can be a research question, a coding task, or both mixed together.
 No args for an interactive settings menu
 - Stored in `~/.xbb/config.json`, created on first use and preserved across reinstalls
 - `maxConcurrentAgents` for parallelizations control
-- `handoffMinTokensLeft` (default 300000): a subagent reporting fewer remaining
-  context tokens than this is told to hand off, and a fresh one continues from
-  its handoff report
+- `handoffLeftRatio` (default 0.3, range 0.1–0.9): the remaining-context ratio
+  below which a subagent hands off (measured from the subagent's own
+  transcript by `scripts/context-left.sh`), and a fresh one continues from
+  its handoff report. The reading lags one API call, so a very low value
+  (e.g. 0.1) leaves little margin against a single large tool result —
+  set it deliberately
 - Settings include which reviewer judges `--wang` rounds
   - `fable` by default, or `opus`/`sonnet`/`codex`
   - the `model` / `effort` / `timeouts` for the `codex` reviewer

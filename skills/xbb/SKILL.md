@@ -31,11 +31,11 @@ Lazy-created by whichever mode reads it first (`mkdir -p ~/.xbb` + defaults belo
   "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300, "tmuxLaunchMode": "split-window" },
   "maxConcurrentAgents": 4,
   "reviewMaxRounds": 8,
-  "handoffMinTokensLeft": 300000
+  "handoffLeftRatio": 0.3
 }
 ```
 
-`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`. `maxConcurrentAgents` bounds the Concurrency guard (steps 3/4/5.5). `reviewMaxRounds`/`reviewer` bound the wang gate (5.5). `handoffMinTokensLeft` is the Context cap threshold (step 4). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
+`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`. `maxConcurrentAgents` bounds the Concurrency guard (steps 3/4/5.5). `reviewMaxRounds`/`reviewer` bound the wang gate (5.5). `handoffLeftRatio` is the remaining-context ratio below which a teammate hands off (step 4's Context cap). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
 
 ## Concurrency guard (`maxConcurrentAgents`)
 
@@ -85,7 +85,7 @@ Spawn independent teammates in one message; apply the Concurrency guard first.
 
 - **Researchers** (read-only): independent angles scaled to difficulty — a simple lookup takes one; a hard or ambiguous question takes several (different subsystems, sources, or hypotheses), with no fixed cap. Give: request verbatim, angle, output path, an evidence-citation instruction.
 - **Coders** (scoped write): self-contained changes, each an exclusive write scope checked pairwise against every other coder's for overlap/shared interface — merge or sequence those, never parallel. Give: request verbatim (or verified findings, mixed mode), task, write scope, report path, artifact form.
-- **Every prompt states**: (a) a one-line `[read-only]`/`[mutating]` completion criterion (coders: a verification command); (b) the SendMessage address for STATUS — `team-lead`, or this invocation's own name if it is itself spawned, never `main`; (c) any earlier report path this stage needs (round-2 reviewer, a fixer). Don't restate what the agent's own file covers.
+- **Every prompt states**: (a) a one-line `[read-only]`/`[mutating]` completion criterion (coders: a verification command); (b) the SendMessage address for STATUS — `team-lead`, or this invocation's own name if it is itself spawned, never `main`; (c) any earlier report path this stage needs (round-2 reviewer, a fixer); (d) the context check — the absolute path `bash "<skill-dir>/scripts/context-left.sh" <handoffLeftRatio>`, and the frequency: every 20 tool calls and after each completed work unit; for a task judged large, prescribe a tighter frequency in the same prompt. Don't restate what the agent's own file covers.
 - **First line of the prompt**: a plain ~30-char summary of the task, right-padded with half-width spaces to exactly 60 chars before the newline (e.g. `Fix login redirect bug` + 38 trailing spaces, then a newline, then `You are xbbr-...`) — the agents-list row under the input box shows `prompt.substring(0,60)` verbatim, so a newline inside the first 60 chars breaks the row into multiple display lines; the padding keeps it out. Applies to every teammate spawn (researchers, coders, reviewers).
 
 ### 4. Communicating with spawned teammates
@@ -94,7 +94,7 @@ Tracking = STATUS signals + harness idle/termination notifications, nothing else
 
 Never wait actively: no ScheduleWakeup, Monitor, sleep, cron/loop, or TaskOutput/TaskList polling to check on a teammate. Completion arrives as a STATUS message or termination notification; end the turn and react when it lands.
 
-**Context cap.** Every researcher/coder message carries `LEFT: <n>` (its remaining context tokens). `LEFT` < `handoffMinTokensLeft`: if the message is DONE, grade normally but never re-engage that teammate (fix rounds go to a fresh spawn); otherwise reply with the single word `HANDOFF`. On `STATUS: HANDOFF`, surface it, then spawn a fresh teammate of the same type (numbering continues) with the original prompt plus the handoff report path as a named input.
+**Context cap.** Every teammate message ends with `CTX: <json>` — the latest output of the context-check script named in its prompt. Teammates send `STATUS: PROGRESS` with CTX after each check and keep working while `action` is `CONTINUE`; on `action: HANDOFF` they stop themselves (existing `STATUS: HANDOFF` flow unchanged: surface it, then spawn a fresh teammate of the same type — numbering continues — with the original prompt plus the handoff report path as a named input). You may still reply `HANDOFF` yourself when a CTX is close to `handoffLeftRatio` and the next unit is large. `result: ERROR` in a CTX: the teammate keeps working regardless; surface the reason to the user once per run with the fix (transcript location, or set `XBB_CONTEXT_WINDOW`), and don't re-engage that teammate after its `STATUS: DONE` (fresh spawn instead, same as any post-DONE fix). A `STATUS: DONE` whose CTX shows `action: HANDOFF` or `leftRatio < handoffLeftRatio`: grade normally, never re-engage (fix rounds go to a fresh spawn).
 
 **One outstanding message per recipient.** Do not send a teammate a
 second message before its reply arrives. It cannot read new mail
@@ -104,6 +104,7 @@ one message that accounts for both without duplicating either.
 **Escalations.** Answer a subagent's judgment question (interpretation, scope, design, out-of-scope fix) promptly with a ruling + one-line rationale. A coder's scope-expansion request: check against every other live coder's scope before granting; hold the coder if it would overlap.
 
 **Notification filter.** Act only on (a) STATUS messages, (b) termination notifications, (c) the no-STATUS fallback in Reading reports.  
+`STATUS: PROGRESS` is informational — read its CTX, never reply unless issuing `HANDOFF`.  
 Idle notifications are not events. Never narrate, acknowledge, or message a teammate in response to one.  
 Also ignore any message/signal/notification whose sender name lacks this run's `-$RUN_ID-` infix.
 
@@ -207,7 +208,7 @@ Opt-in trim of run directories; temp root resolution matches step 3.
 ## `config` mode
 
 1. **No args**: one AskUserQuestion call with Q1 "Reviewer" (`fable`/`opus`/`sonnet`/`codex`, current suffixed) and Q2 "Max agents" (`2`/`4`/`8`, current suffixed; "Other" free-text is automatic — never add your own Other option). If Q1 = `codex`, a second call: Q1 "Codex model" (`gpt-5.6-terra`/`gpt-5.6`), Q2 "Effort" (`low`/`medium`/`high`/`xhigh`).
-2. **With `key=value` args**: apply directly, no questions — `handoffMinTokensLeft` must be a positive integer; `reviewer` must validate against `fable`/`opus`/`sonnet`/`codex` first; an invalid value is rejected (report it, keep the previous `reviewer`) rather than saved.
+2. **With `key=value` args**: apply directly, no questions — `handoffLeftRatio` must be a number in 0.1–0.9; `reviewer` must validate against `fable`/`opus`/`sonnet`/`codex` first; an invalid value is rejected (report it, keep the previous value) rather than saved.
 3. **Codex preflight**, only when the new `reviewer` is `codex`, before saving:
    - `command -v codex` and `codex --version` matches `codex-cli X.Y.Z`.
    - `codex login status` exits 0.
