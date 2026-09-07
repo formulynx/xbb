@@ -1,6 +1,6 @@
 # Codex reviewer path
 
-Full procedure for the wang review gate (SKILL.md step 5.5) when `reviewer` is
+Full procedure for the wang review gate (SKILL.md step 7) when `reviewer` is
 `codex`, via [agmsg](https://github.com/fujibee/agmsg)'s app-server bridge.
 Codex is launched exactly ONCE per run, kept alive across every REVISE round
 in the same TUI pane, and torn down exactly once at the true end (PASS,
@@ -62,4 +62,4 @@ Never a blanket operation — only ever acts on the pane id and identity this ru
 bash "<skill-dir>/scripts/codex-reviewer-cleanup.sh" "$TEAM" "$CODEX_AGENT" "$RUN_DIR/codex-reviewer-pane"
 ```
 
-Also run at run end via SKILL.md step 6. Kills the recorded pane/window (which also kills the backgrounded dispatcher, same process group, via SIGHUP), then deregisters via `leave.sh "$TEAM" "$CODEX_AGENT"` so an already-detached bridge child self-exits within a couple of its own poll ticks once it notices the pair is no longer registered (best-effort — cleanup does not wait/block on that self-exit). Does NOT touch the shared app-server for `~/.xbb/codex-cwd` (left running, reused across rounds AND across runs — `codex-monitor.sh` has its own reuse/staleness liveness+version check and starts a fresh one when needed; never kill it from xbb's own scripts) and does NOT call `despawn.sh` (no `spawn.<team>__<name>` placement record exists under this design — `spawn.sh` is never called — so `despawn.sh --force` would die with "no placement record... was it launched via 'spawn'?").
+Also run at run end via SKILL.md step 8. Kills the recorded pane/window (which also kills the backgrounded dispatcher, same process group, via SIGHUP), then deregisters via `leave.sh "$TEAM" "$CODEX_AGENT"` so an already-detached bridge child self-exits within a couple of its own poll ticks once it notices the pair is no longer registered (best-effort — cleanup does not wait/block on that self-exit). Does NOT touch the shared app-server for `~/.xbb/codex-cwd` (left running, reused across rounds AND across runs — `codex-monitor.sh` has its own reuse/staleness liveness+version check and starts a fresh one when needed; never kill it from xbb's own scripts) and does NOT call `despawn.sh` (no `spawn.<team>__<name>` placement record exists under this design — `spawn.sh` is never called — so `despawn.sh --force` would die with "no placement record... was it launched via 'spawn'?").

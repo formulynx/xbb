@@ -18,7 +18,7 @@
 # standing instruction -- the caller must cross-check each one against its
 # own STATUS-signal bookkeeping before calling TaskStop on it. `sweep` is
 # the one exception: call it only once every teammate is already known
-# DONE/abandoned (SKILL.md step 6), at which point acting on its output
+# DONE/abandoned (SKILL.md step 8), at which point acting on its output
 # unconditionally is safe.
 #
 # Usage:

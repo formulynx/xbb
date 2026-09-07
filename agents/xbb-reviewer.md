@@ -26,8 +26,9 @@ in your prompt.
    codes. For `[mutating]` criteria, cite the grader's log plus a
    read-only tree check.
 3. **Report** (to your file): VERDICT / Checked (+ not-inspected coverage
-   declaration) / Findings (numbered, file-referenced, actionable for
-   REVISE) / Side findings / Concerns.
+   declaration; for a semantic-class sweep, the
+   extracted comment/doc line count per file) / Findings (numbered,
+   file-referenced, actionable for REVISE) / Side findings / Concerns.
 4. **Independence.** Read only what the prompt names as round input —
    never coder report files or task prompts. Write access limited to your
    one report file.
