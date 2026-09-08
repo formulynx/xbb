@@ -257,7 +257,7 @@ Proceed to step 8.
 - timeout-abort handling
 - teardown, once only, at PASS, rounds-exhausted, or timeout-abort (via step 8 at run end)
 
-In a cmux claude-teams pane (`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), never hand-assemble a raw `tmux`/`cmux` pane-launch command. Always go through `scripts/codex-reviewer.sh launch`, which picks tmux or cmux itself.
+In a cmux claude-teams pane (`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), never hand-assemble a raw `tmux`/`cmux` pane-launch command. Always go through `scripts/codex-reviewer.sh launch`, which picks tmux or cmux itself. Round-1 instructions ride on that launch command as codex's positional prompt, never as keystrokes after launch; the only raw-pane delivery ever allowed is the bridge-not-armed fallback in `references/codex-reviewer-path.md` (`tmux send-keys -l` + `Enter` with a one-line file pointer — cmux's tmux shim has no `load-buffer`/`paste-buffer`).
 
 ### 8. Shut down, then answer
 

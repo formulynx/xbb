@@ -34,9 +34,9 @@
 #      cmux surfaces each tmux session as a new workspace. Skipped when not
 #      under tmux.
 #   Deliberately NOT covered: the role-session record (bridge arming for
-#   round 2+). That is runtime state that only exists after codex's round-1
-#   turn runs codex-record-session.sh -- see codex-reviewer-path.md's ACK
-#   thread-report step.
+#   round 2+). That is runtime state that only exists once codex's round-1
+#   ACK has reported its thread id and the orchestrator has recorded it --
+#   see codex-reviewer-path.md's Wait step.
 #   Never disables the sandbox. On failure prints cause plus fix, exits
 #   non-zero so the orchestrator stops the run before spawning teammates.
 #
