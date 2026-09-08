@@ -73,7 +73,7 @@ Resolve these before any spawn.
    - Temp root: `${TMPDIR:-${TEMP:-${TMP:-/tmp}}}`.
    - `RUN_DIR="$(mktemp -d "${TMPDIR:-${TEMP:-${TMP:-/tmp}}}/xbb-run-XXXXXX")"`.
    - `RUN_ID="${RUN_DIR##*-}"; RUN_ID="${RUN_ID:0:3}"`.
-2. Codex sandbox preflight, only if the gate is enabled and `reviewer` is `codex`: `bash "${CLAUDE_SKILL_DIR}/scripts/reviewer-spawn-preflight.sh"`. Non-zero exit: print stderr and stop the run with no teammates spawned.
+2. Codex sandbox preflight, only if the gate is enabled and `reviewer` is `codex`: `bash "${CLAUDE_SKILL_DIR}/scripts/codex-reviewer.sh" preflight`. Non-zero exit: print stderr and stop the run with no teammates spawned.
 3. Coding/mixed: write `plan.md` into `$RUN_DIR` (the canonical plan reference, or the plan authored in step 2). Once, before any coder spawn.
 
 ### 4. Spawn teammates
@@ -257,9 +257,7 @@ Proceed to step 8.
 - timeout-abort handling
 - teardown, once only, at PASS, rounds-exhausted, or timeout-abort (via step 8 at run end)
 
-In a cmux claude-teams pane (`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), never hand-assemble a raw `tmux`/`cmux` pane-launch command. Always go through the script that `codex-reviewer-path.md`'s Launch step selects for the detected case:
-- `$TMUX` set: `scripts/codex-tmux-launch.sh`
-- `$TMUX` not set: `scripts/cmux-spawn-split.sh`
+In a cmux claude-teams pane (`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), never hand-assemble a raw `tmux`/`cmux` pane-launch command. Always go through `scripts/codex-reviewer.sh launch`, which picks tmux or cmux itself.
 
 ### 8. Shut down, then answer
 
