@@ -19,7 +19,7 @@ The user's request: `$ARGUMENTS`
 
 ## Role
 
-Orchestrator: decomposition, delegation, verification, synthesis. Never investigation or implementation (see Constraints). All investigation to `xbb-researcher`; all implementation to `xbb-coder` (both Sonnet, effort high).
+Orchestrator: decomposition, delegation, verification, synthesis. Never investigation or implementation (see Constraints). All investigation to `xbb-researcher`; all implementation to `xbb-coder` (both Sonnet, effort high). Subagents ship in this plugin, so spawn them with the plugin-scoped `subagent_type`: `xbb:xbb-researcher`, `xbb:xbb-coder`, `xbb:xbb-reviewer`.
 
 ## Config (`~/.xbb/config.json`)
 
@@ -41,10 +41,10 @@ Lazy-created by whichever mode reads it first (`mkdir -p ~/.xbb` + defaults belo
 
 Applies before every spawn in steps 4, 5, 7, for a top-level invocation only (skip if this run is itself a spawned teammate). Excludes the codex reviewer (plain OS process, killed by its own cleanup script, never in the team file).
 
-Resolve `<team-file>` with `$RUN_ID` (step 3), reuse through step 8. Path is provisional until the first spawn confirms it: `bash "<skill-dir>/scripts/resolve-team-file.sh" "$CLAUDE_CODE_SESSION_ID"` (PowerShell: `resolve-team-file.ps1 $env:CLAUDE_CODE_SESSION_ID`). First spawn needs no `gate` call (cap the batch at `maxConcurrentAgents`, spawn), then re-resolve from that spawn's `agent_id` (`<name>@session-XXXXXXXX`) and confirm once via `count`. `TEAMFILE-MISSING` is always a path bug, never teammate evidence.
+Resolve `<team-file>` with `$RUN_ID` (step 3), reuse through step 8. Path is provisional until the first spawn confirms it: `bash "${CLAUDE_SKILL_DIR}/scripts/resolve-team-file.sh" "$CLAUDE_CODE_SESSION_ID"`. First spawn needs no `gate` call (cap the batch at `maxConcurrentAgents`, spawn), then re-resolve from that spawn's `agent_id` (`<name>@session-XXXXXXXX`) and confirm once via `count`. `TEAMFILE-MISSING` is always a path bug, never teammate evidence.
 
 ```
-bash "<skill-dir>/scripts/team-guard.sh" <mode> <team-file> "$RUN_ID" ...  # PowerShell: team-guard.ps1
+bash "${CLAUDE_SKILL_DIR}/scripts/team-guard.sh" <mode> <team-file> "$RUN_ID" ...
 ```
 
 `isActive` is `true` only mid-turn; `false` covers done, paused, and finished-but-ungraded alike, none freeing the slot except `TaskStop`. `gate` weighs ACTIVE+FINISHED against the max. `isActive=false` alone is a stop candidate, not proof — confirm it against your own grading in step 6 before calling `TaskStop`: rank already-graded ones first, and hold any you'll re-engage (a coder awaiting a fix, a reviewer holding REVISE) for step 7 or step 8 instead.
@@ -63,17 +63,17 @@ bash "<skill-dir>/scripts/team-guard.sh" <mode> <team-file> "$RUN_ID" ...  # Pow
 Resolve these before any spawn.
 - A. Plan source (coding/mixed).
   - A plan file or section the request names is the canonical plan, used verbatim.
-  - Otherwise, if the review gate is or might become enabled, author the plan yourself: the simplest design that fully meets the current requirements, built to stay rather than a stopgap. When the request is too rough to plan from, run an `xbb-researcher` investigation first.
+  - Otherwise, if the review gate is or might become enabled, author the plan yourself: the simplest design that fully meets the current requirements, built to stay rather than a stopgap. When the request is too rough to plan from, run an `xbb:xbb-researcher` investigation first.
 - B. Output artifact.
   - Research: ask via AskUserQuestion (destination, then format) only if the request implies a specific output artifact and leaves either unspecified. Skip for a plain question with no artifact ask.
   - Coding: ask about artifact form (apply to tree / branch+commit / diff-only) only when genuinely ambiguous. Never commit or push unless asked.
 
 ### 3. Prepare the run
 1. Create `$RUN_DIR`, atomically unique, and compute `$RUN_ID` once from it.
-   - Temp root: POSIX `${TMPDIR:-${TEMP:-${TMP:-/tmp}}}`. PowerShell: `$env:TMPDIR`, else `$env:TEMP`, else `$env:TMP`, else `C:\Temp`.
-   - `RUN_DIR="$(mktemp -d "${TMPDIR:-${TEMP:-${TMP:-/tmp}}}/xbb-run-XXXXXX")"` (PowerShell: `New-Item` + `[guid]::NewGuid()`).
+   - Temp root: `${TMPDIR:-${TEMP:-${TMP:-/tmp}}}`.
+   - `RUN_DIR="$(mktemp -d "${TMPDIR:-${TEMP:-${TMP:-/tmp}}}/xbb-run-XXXXXX")"`.
    - `RUN_ID="${RUN_DIR##*-}"; RUN_ID="${RUN_ID:0:3}"`.
-2. Codex sandbox preflight, only if the gate is enabled and `reviewer` is `codex`: `bash "<skill-dir>/scripts/reviewer-spawn-preflight.sh"`. Non-zero exit: print stderr and stop the run with no teammates spawned.
+2. Codex sandbox preflight, only if the gate is enabled and `reviewer` is `codex`: `bash "${CLAUDE_SKILL_DIR}/scripts/reviewer-spawn-preflight.sh"`. Non-zero exit: print stderr and stop the run with no teammates spawned.
 3. Coding/mixed: write `plan.md` into `$RUN_DIR` (the canonical plan reference, or the plan authored in step 2). Once, before any coder spawn.
 
 ### 4. Spawn teammates
@@ -98,7 +98,7 @@ Apply the Concurrency guard, then spawn all independent teammates in one message
 - A one-line `[read-only]`/`[mutating]` completion criterion (coders: a verification command).
 - The SendMessage address for STATUS: `team-lead`, or this invocation's own name if it is itself spawned. Never `main`.
 - Any earlier report path this stage needs (round-2 reviewer, a fixer).
-- The context check: the absolute path `bash "<skill-dir>/scripts/context-left.sh" <handoffLeftRatio>` and the frequency.
+- The context check: the absolute path `bash "${CLAUDE_SKILL_DIR}/scripts/context-left.sh" <handoffLeftRatio>` and the frequency.
   - Default frequency: every 20 tool calls and after each completed work unit.
   - For a task judged large, prescribe a tighter frequency in the same prompt.
 - Don't restate what the agent's own file covers.
@@ -174,7 +174,7 @@ In order:
 
 #### Code reports
 - Reject a report that lacks verification output, uses "should work" phrasing, has no done-check, or violates a coding/documentation convention from the project's or global CLAUDE.md. Re-spawn naming the defect.
-- Grader separation: the coder never grades itself. The orchestrator or a fresh `xbb-researcher` independently confirms the done-check.
+- Grader separation: the coder never grades itself. The orchestrator or a fresh `xbb:xbb-researcher` independently confirms the done-check.
 - A `[mutating]` criterion is always run by that grader, plus one aggregate run when multiple coders are involved.
   - Log: `$RUN_DIR/verify-logs/<runner>__<criterion-slug>__round<N>.log`. That log is the evidence of record.
 - Fix loop: two failed attempts on the same defect, then stop and report. This two-strike rule also applies to the orchestrator's own follow-up spawns.
@@ -241,7 +241,7 @@ Proceed to step 8.
 
 #### Claude reviewer path
 `reviewer` ∈ fable/opus/sonnet.
-- Round 1: Concurrency guard, then spawn `xbbrv-$RUN_ID-01` as `xbb-reviewer` with the model overridden to the configured `reviewer`.
+- Round 1: Concurrency guard, then spawn `xbbrv-$RUN_ID-01` as `xbb:xbb-reviewer` with the model overridden to the configured `reviewer`.
   - Give: round input, report path, Reviewer policy, VERDICT protocol, your teammate name.
   - It inspects the working tree itself (git diff, tests, etc.). You do not hand it a diff.
 - PASS: step 8 like any teammate.
@@ -265,7 +265,7 @@ In a cmux claude-teams pane (`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), never hand-asse
 
 Once step 6 (and, if enabled, the step 7 loop) has fully resolved and every teammate is DONE/abandoned:
 1. Re-resolve `<team-file>` and `RUN_ID` exactly as the Concurrency guard does. Never use a remembered or cached name list.
-2. Run `team-guard.sh sweep <team-file> <RUN_ID>` (PowerShell: `team-guard.ps1 sweep <team-file> <RUN_ID>`).
+2. Run `team-guard.sh sweep <team-file> <RUN_ID>`.
 3. `TaskStop` every printed name.
 
 Notes:
@@ -295,10 +295,10 @@ Respond in the request's language.
 
 Opt-in trim of run directories; temp root resolution matches step 3.
 
-1. **Measure.** `bash "<skill-dir>/scripts/xbb-clean.sh" measure` (PowerShell: `xbb-clean.ps1 measure`) — prints per-directory sizes, total, and count for `xbb-run-*` dirs under the resolved temp root, or "nothing to clean" if none found. Nothing found → tell the user, stop.
+1. **Measure.** `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-clean.sh" measure` — prints per-directory sizes, total, and count for `xbb-run-*` dirs under the resolved temp root, or "nothing to clean" if none found. Nothing found → tell the user, stop.
 2. **Present** the count, total size, per-directory list.
 3. **Ask** via AskUserQuestion: Delete all vs Keep. Never default to deleting.
-4. **Act.** Delete all → `bash "<skill-dir>/scripts/xbb-clean.sh" delete` (PowerShell: `xbb-clean.ps1 delete`) — deletes strictly `xbb-run-*` under the resolved root, reports freed space/count. Keep/anything else → delete nothing.
+4. **Act.** Delete all → `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-clean.sh" delete` — deletes strictly `xbb-run-*` under the resolved root, reports freed space/count. Keep/anything else → delete nothing.
 
 ## `config` mode
 

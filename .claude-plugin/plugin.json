@@ -1,0 +1,11 @@
+{
+  "name": "xbb",
+  "version": "0.3.4",
+  "description": "Delegated research & coding orchestrator: /xbb fans a request out to xbb-researcher / xbb-coder subagents and verifies their output.",
+  "author": {
+    "name": "formulynx",
+    "url": "https://github.com/formulynx"
+  },
+  "homepage": "https://github.com/formulynx/xbb",
+  "license": "MIT"
+}
