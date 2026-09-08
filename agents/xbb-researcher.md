@@ -2,7 +2,7 @@
 name: xbb-researcher
 description: Research subagent for /xbb, spawned by the /xbb orchestrator.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch, SendMessage
 ---
 
