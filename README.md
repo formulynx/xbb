@@ -10,16 +10,6 @@ Problem*, known for doing the work of ten people.
 
 ## Install
 
-### Requirements
-
-- Claude Code
-- `bash` and `jq` on `PATH`. The skill's scripts run through the Bash tool
-  and parse JSON with `jq`
-- On native Windows: [Git for Windows](https://gitforwindows.org/) (provides
-  Git Bash; Claude Code treats it as optional, xbb requires it) plus a `jq`
-  binary, e.g. `winget install jqlang.jq`
-- The `--wang` codex reviewer and its tmux/cmux pane handling are POSIX-only
-
 xbb ships as a Claude Code plugin. Add the marketplace once, then install:
 
 ```sh
@@ -27,28 +17,19 @@ claude plugin marketplace add formulynx/xbb
 claude plugin install xbb@xbb
 ```
 
-- Updates arrive automatically at Claude Code startup whenever a new
-  version is published
 - Uninstall with `claude plugin uninstall xbb@xbb`
 - For dev, `claude plugin marketplace add /path/to/clone` and install from
   there, or run `claude --plugin-dir /path/to/clone`
 
-### Migrating from the install.sh / install.ps1 era
+### Requirements
 
-Versions up to v0.3.4 copied files into `~/.claude/skills/xbb` and
-`~/.claude/agents/`. Those copies take precedence over the plugin and will
-never update, so remove them first:
-
-```sh
-# macOS / Linux / WSL / Git Bash
-curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.4/install.sh | bash -s -- --uninstall
-
-# Native Windows (PowerShell)
-irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.4/install.ps1 -OutFile install.ps1
-.\install.ps1 -Uninstall
-```
-
-`~/.xbb/config.json` is untouched by either path.
+- Claude Code
+- `bash` and `jq` on `PATH`
+- On native Windows
+  - [Git for Windows](https://gitforwindows.org/) (provides
+  Git Bash; Claude Code treats it as optional, xbb requires it)
+  - `jq` binary (e.g. `winget install jqlang.jq`)
+- The `--wang` codex reviewer and its tmux/cmux pane handling are POSIX-only
 
 ## Usage
 
@@ -97,6 +78,23 @@ No args for an interactive settings menu
 ```
 
 Review and optionally delete subagent hand-off files under `$TMPDIR/xbb-run-<id>/`.
+
+## Migrating from the install.sh / install.ps1 era
+
+Versions up to v0.3.4 copied files into `~/.claude/skills/xbb` and
+`~/.claude/agents/`. Those copies take precedence over the plugin and will
+never update, so remove them first:
+
+```sh
+# macOS / Linux / WSL / Git Bash
+curl -fsSL https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.4/install.sh | bash -s -- --uninstall
+
+# Native Windows (PowerShell)
+irm https://cdn.jsdelivr.net/gh/formulynx/xbb@v0.3.4/install.ps1 -OutFile install.ps1
+.\install.ps1 -Uninstall
+```
+
+`~/.xbb/config.json` is untouched by either path.
 
 ## License
 
