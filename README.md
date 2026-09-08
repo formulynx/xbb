@@ -54,7 +54,9 @@ The request can be a research question, a coding task, or both mixed together.
 /xbb config [args]
 ```
 
-No args for an interactive settings menu
+No args for an interactive settings menu. With args, `key=value` pairs are
+validated and saved directly (`/xbb config reviewer=opus codex.effort=high`);
+an invalid value rejects the whole call and keeps the previous settings.
 - Stored in `~/.xbb/config.json`, created on first use and preserved across reinstalls
 - `maxConcurrentAgents` for parallelizations control
 - `handoffLeftRatio` (default 0.3, range 0.1–0.9): the remaining-context ratio

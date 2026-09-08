@@ -23,7 +23,7 @@ Orchestrator: decomposition, delegation, verification, synthesis. Never investig
 
 ## Config (`~/.xbb/config.json`)
 
-Lazy-created by whichever mode reads it first (`mkdir -p ~/.xbb` + defaults below). Missing keys fall back to defaults.
+Read it with `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config get`, which creates the file on first use and prints the effective values (missing keys filled from the defaults below).
 
 ```json
 {
@@ -293,18 +293,15 @@ Respond in the request's language.
 
 Opt-in trim of run directories; temp root resolution matches step 3.
 
-1. **Measure.** `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-clean.sh" measure` — prints per-directory sizes, total, and count for `xbb-run-*` dirs under the resolved temp root, or "nothing to clean" if none found. Nothing found → tell the user, stop.
+1. **Measure.** `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" clean measure` — prints per-directory sizes, total, and count for `xbb-run-*` dirs under the resolved temp root, or "nothing to clean" if none found. Nothing found → tell the user, stop.
 2. **Present** the count, total size, per-directory list.
 3. **Ask** via AskUserQuestion: Delete all vs Keep. Never default to deleting.
-4. **Act.** Delete all → `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-clean.sh" delete` — deletes strictly `xbb-run-*` under the resolved root, reports freed space/count. Keep/anything else → delete nothing.
+4. **Act.** Delete all → `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" clean delete` — deletes strictly `xbb-run-*` under the resolved root, reports freed space/count. Keep/anything else → delete nothing.
 
 ## `config` mode
 
-1. **No args**: one AskUserQuestion call with Q1 "Reviewer" (`fable`/`opus`/`sonnet`/`codex`, current suffixed) and Q2 "Max agents" (`2`/`4`/`8`, current suffixed; "Other" free-text is automatic — never add your own Other option). If Q1 = `codex`, a second call: Q1 "Codex model" (`gpt-5.6-terra`/`gpt-5.6`), Q2 "Effort" (`low`/`medium`/`high`/`xhigh`).
-2. **With `key=value` args**: apply directly, no questions — `handoffLeftRatio` must be a number in 0.1–0.9; `reviewer` must validate against `fable`/`opus`/`sonnet`/`codex` first; an invalid value is rejected (report it, keep the previous value) rather than saved.
-3. **Codex preflight**, only when the new `reviewer` is `codex`, before saving:
-   - `command -v codex` and `codex --version` matches `codex-cli X.Y.Z`.
-   - `codex login status` exits 0.
-   - agmsg present at `~/.agents/skills/agmsg/`; if absent but the plugin-cache install.sh exists, bootstrap: `bash "$(ls ~/.claude/plugins/cache/fujibee-agmsg/agmsg/*/install.sh | head -1)" --cmd agmsg`. Neither present → fail.
+Validation, codex preflight, and the write all live in `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config set <key>=<value>...`. It rejects the whole call on any invalid assignment (stderr names each one, file untouched, exit 1); when the new `reviewer` is `codex` it bootstraps agmsg from the plugin cache if missing and runs `codex-reviewer.sh preflight` before saving. On success it prints the saved config.
 
-   Any failure → print the specific remediation (`npm install -g @openai/codex`, `codex login`, or `/plugin install agmsg@fujibee-agmsg`) and keep the previous `reviewer`. Success → save and confirm.
+1. **No args**: read the current values with `xbb-admin.sh config get`, then one AskUserQuestion call with Q1 "Reviewer" (`fable`/`opus`/`sonnet`/`codex`, current suffixed) and Q2 "Max agents" (`2`/`4`/`8`, current suffixed; "Other" free-text is automatic — never add your own Other option). If Q1 = `codex`, a second call: Q1 "Codex model" (`gpt-5.6-terra`/`gpt-5.6`), Q2 "Effort" (`low`/`medium`/`high`/`xhigh`). Apply the answers with one `config set` call.
+2. **With `key=value` args**: pass them verbatim to `config set`, no questions. Nested keys are dotted (`codex.effort=high`).
+3. **Report** the script's output: the saved config, or its stderr (which already carries the remediation, e.g. `codex login`) with the previous values kept.
