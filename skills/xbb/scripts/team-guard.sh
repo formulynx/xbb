@@ -49,6 +49,9 @@ cmd="${1:-}"; file="${2:-}"; run_id="${3:-}"
 # substitution, where an exit would only kill the subshell and still print
 # `ACTIVE 0` with exit 0 -- the exact ambiguity this guard exists to remove.
 [ -f "$file" ] || { echo "TEAMFILE-MISSING $file" >&2; exit 2; }
+# Git Bash on Windows ships without jq; fail here rather than let rows() emit
+# "command not found" inside a substitution that still prints `ACTIVE 0`.
+command -v jq >/dev/null 2>&1 || { echo "JQ-MISSING: install jq" >&2; exit 2; }
 
 rows() {
   jq -r --arg rid "-$run_id-" \
