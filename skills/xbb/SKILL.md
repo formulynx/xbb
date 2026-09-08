@@ -19,7 +19,7 @@ The user's request: `$ARGUMENTS`
 
 ## Role
 
-Orchestrator: decomposition, delegation, verification, synthesis. Never investigation or implementation (see Constraints). All investigation to `xbb-researcher`; all implementation to `xbb-coder` (both Sonnet, effort high). Subagents ship in this plugin, so spawn them with the plugin-scoped `subagent_type`: `xbb:xbb-researcher`, `xbb:xbb-coder`, `xbb:xbb-reviewer`.
+Orchestrator: decomposition, delegation, verification, synthesis. Never investigation or implementation (see Constraints). All investigation to `xbb-researcher`; all implementation to `xbb-coder`. Subagents ship in this plugin, so spawn them with the plugin-scoped `subagent_type`: `xbb:xbb-researcher`, `xbb:xbb-coder`, `xbb:xbb-reviewer`.
 
 ## Config (`~/.xbb/config.json`)
 
@@ -104,7 +104,7 @@ Apply the Concurrency guard, then spawn all independent teammates in one message
 - Don't restate what the agent's own file covers.
 
 #### First line of the prompt
-- A plain ~30-char summary of the task, right-padded with half-width spaces to exactly 60 chars before the newline. Example: `Fix login redirect bug` + 38 trailing spaces, newline, then `You are xbbr-...`.
+- A plain one-line task summary, right-padded with spaces until the line is at least 60 characters long. Example: `Fix login redirect bug` followed by trailing spaces to column 60 or beyond, newline, then `You are xbbr-...`.
 - Reason: the agents-list row under the input box shows `prompt.substring(0,60)` verbatim. A newline inside the first 60 chars breaks the row into multiple display lines. The padding keeps it out.
 - Applies to every teammate spawn (researchers, coders, reviewers).
 
@@ -112,7 +112,7 @@ Apply the Concurrency guard, then spawn all independent teammates in one message
 
 #### Tracking
 - Tracking = STATUS signals + harness idle/termination notifications, nothing else.
-- Never wait actively: no ScheduleWakeup, Monitor, sleep, cron/loop, or TaskOutput/TaskList polling. End the turn with plain text and react when the STATUS message or termination notification lands.
+- Wait passively: end the turn with plain text and react when the STATUS message or termination notification lands. The harness re-invokes you when a teammate finishes, so polling or scheduling a wakeup to check on one only spends turns. No ScheduleWakeup, Monitor, sleep, cron/loop, or TaskOutput/TaskList polling.
 
 #### Context cap
 - Every teammate message ends with `CTX: <json>`, the latest output of the context-check script named in its prompt.
@@ -141,7 +141,7 @@ Apply the Concurrency guard, then spawn all independent teammates in one message
   - termination notifications
   - the no-STATUS fallback in Reading reports
 - `STATUS: PROGRESS` is informational. Read its CTX. Reply only to issue `HANDOFF`.
-- Idle notifications are not events. Never narrate, acknowledge, or message a teammate in response to one.
+- Idle notifications carry no information about the run; take no action on one.
 - Ignore any message, signal, or notification whose sender name lacks this run's `-$RUN_ID-` infix.
 
 #### Reading reports
@@ -257,7 +257,7 @@ Proceed to step 8.
 - timeout-abort handling
 - teardown, once only, at PASS, rounds-exhausted, or timeout-abort (via step 8 at run end)
 
-In a cmux claude-teams pane (`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), never hand-assemble a raw `tmux`/`cmux` pane-launch command. Always go through `scripts/codex-reviewer.sh launch`, which picks tmux or cmux itself. Round-1 instructions ride on that launch command as codex's positional prompt, never as keystrokes after launch; the only raw-pane delivery ever allowed is the bridge-not-armed fallback in `references/codex-reviewer-path.md` (`tmux send-keys -l` + `Enter` with a one-line file pointer — cmux's tmux shim has no `load-buffer`/`paste-buffer`).
+In a cmux claude-teams pane (`$CMUX_CLAUDE_TEAMS_CMUX_BIN` set), launch codex only through `scripts/codex-reviewer.sh launch` (it picks tmux or cmux) and deliver text to the pane only by the mechanisms in `references/codex-reviewer-path.md`: round-1 instructions ride on the launch command as codex's positional prompt, later rounds go over the bridge, and the one-line file-pointer `send-keys` fallback covers a bridge that is not armed. A hand-assembled pane command skips the surface-file record that cleanup depends on.
 
 ### 8. Shut down, then answer
 
