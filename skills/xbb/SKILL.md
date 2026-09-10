@@ -173,8 +173,15 @@ In order:
 - Surface unresolved medium/low-confidence load-bearing claims to the user rather than asserting them.
 
 #### Code reports
-- Reject a report that lacks verification output, uses "should work" phrasing, has no done-check, or violates a coding/documentation convention from the project's or global CLAUDE.md. Re-spawn naming the defect.
-- Grader separation: the coder never grades itself. The orchestrator or a fresh `xbb:xbb-researcher` independently confirms the done-check.
+- Reject a report that lacks verification output, uses "should work" phrasing, has no done-check, or violates a coding or documentation convention the orchestrator itself is bound by.
+- Convention check, run by the orchestrator before any review spawn.
+  - Enumerate the population first: `git diff -U0` for every added or changed comment and doc line, plus every comment and doc line of each new file. Record the extracted line count per file in the grader log.
+  - Judge every extracted line against the conventions already loaded in this session's context and against this run's own inputs (request, plan). Keyword search alone is not a sweep.
+  - Classify each changed document by content (living document or point-in-time record) and apply that category's convention.
+  - A violation is a defect: re-spawn the coder naming the file, the line, and the convention. Repeat the full sweep after every fix round; a fix can introduce a new violation.
+- Scope check, same timing: the file set from `git status --porcelain` must be a subset of the union of the coders' write scopes. Any file outside it, or any change in a scoped file unrelated to the task (a "one-line fix" that also deletes or adds unrelated content), is a defect. Re-spawn naming the file.
+- Derived-artifact check: when the diff touches a source that a generated table, graph, ledger, or index is built from, that artifact must be regenerated in the same diff, or its regeneration escalated as out of scope. A stale derived artifact is a defect.
+- Grader separation: the coder never grades itself. The orchestrator independently confirms the done-check.
 - A `[mutating]` criterion is always run by that grader, plus one aggregate run when multiple coders are involved.
   - Log: `$RUN_DIR/verify-logs/<runner>__<criterion-slug>__round<N>.log`. That log is the evidence of record.
 - Fix loop: two failed attempts on the same defect, then stop and report. This two-strike rule also applies to the orchestrator's own follow-up spawns.
