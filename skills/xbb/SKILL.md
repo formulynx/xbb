@@ -192,36 +192,17 @@ Only when the gate is enabled. Loop up to `reviewMaxRounds` rounds.
   - Canonical plan (or, for research, the report files).
   - Request verbatim, deviation disclosures, prior verdicts, `[mutating]`-criterion grader logs.
 - Same reviewer identity's later round: delta only. Name what changed, then the required work in this order:
-  1. Re-run the Reviewer policy's full sweeps over the whole current diff (enumerable classes, semantic-class extraction with per-file counts, propagation sweep) and report the results in Checked first.
+  1. Re-run the Reviewer policy's full sweeps (as written in `references/reviewer-policy.md`) over the whole current diff (enumerable classes, content-type review with per-file line counts, propagation sweep) and report the results in Checked first.
   2. Re-verify each prior finding at its site.
   - The delta never bounds the sweep to what changed. No phrasing that limits the sweep to the diff's own lines or to files a prior finding named.
 - A reclaimed reviewer replaced by a fresh one gets the full input again.
 - Always excluded: coder report files and task prompts to coders (blind review). Not excluded for research runs, where the report files are themselves the artifact.
 
-#### Reviewer policy
-Given verbatim in the spawn prompt.
-- Judge, not director. Report defects. Never fix, redesign, or expand scope. A stopgap, or a custom implementation where an established library fits, is an implementation-defect finding, not a side finding.
-- Read-only. Inspect the diff, files, and the project's own verification commands. Never mutate the tree. For a `[mutating]` criterion, treat the grader's log as executed evidence, confirmed against the tree with read-only commands.
-- No scope creep. Review against the request as given. Adjacent issues are non-blocking side findings.
-- No delegation. Never spawn or invoke another agent or process. Never message anyone but team-lead. This holds on the codex path too, which has full shell access. The review stays single-process, single-channel.
-- Never silently resolve ambiguity that would change the verdict.
-  - Claude path: escalate live via SendMessage and wait for the ruling.
-  - Codex path: encode it as the round's sole REVISE finding.
-- A REVISE verdict requires the same full sweep a PASS would:
-  - Exhaustively enumerate any mechanically-enumerable defect class.
-  - Propagation sweep: grep the whole codebase for every reference, old and new form, to any symbol this round's change renamed or changed.
-- Semantic defect classes (e.g. a comment/doc convention: WHY-only, no change-history narration). Enumerate the population before judging:
-  - Extract every added or changed comment/doc line via `git diff -U0`, plus every comment/doc line of each new file.
-  - State the extracted line count per file in Checked.
-  - Judge every extracted line. Keyword search alone is not a sweep.
-  - Repeat over the whole diff in every later round, not only files a prior finding named.
-- Report structure: VERDICT / Checked (with an explicit not-inspected coverage declaration) / Findings (REVISE: numbered, file-referenced, actionable) / Side findings / Concerns.
-
-#### VERDICT protocol
-- First line exactly `VERDICT: PASS` or `VERDICT: REVISE`.
-- Each REVISE finding: numbered, file-referenced, actionable.
-  - Tagged **implementation defect** or **plan defect**.
-  - Marked `[carried over from round N-1]` if it repeats an unresolved prior finding.
+#### Reviewer policy and VERDICT protocol
+Both live in `references/reviewer-policy.md` and are given verbatim: `cat "${CLAUDE_SKILL_DIR}/references/reviewer-policy.md"` into the spawn prompt or round-1 file. Never paraphrase, trim, or retype them. Orchestrator-facing summary:
+- The reviewer judges only; conventions and house style are the grader's (step 6).
+- The reviewer classifies each changed file by content type and reviews code, living documents, and point-in-time records by the criteria in the file.
+- The first line of a verdict is exactly `VERDICT: PASS` or `VERDICT: REVISE`; REVISE findings are numbered, file-referenced, tagged **implementation defect** or **plan defect**, and marked `[carried over from round N-1]` when repeated.
 
 #### On PASS
 Proceed to step 8.
@@ -242,7 +223,7 @@ Proceed to step 8.
 #### Claude reviewer path
 `reviewer` ∈ fable/opus/sonnet.
 - Round 1: Concurrency guard, then spawn `xbbrv-$RUN_ID-01` as `xbb:xbb-reviewer` with the model overridden to the configured `reviewer`.
-  - Give: round input, report path, Reviewer policy, VERDICT protocol, your teammate name.
+  - Give: round input, report path, the full text of `references/reviewer-policy.md`, your teammate name.
   - It inspects the working tree itself (git diff, tests, etc.). You do not hand it a diff.
 - PASS: step 8 like any teammate.
 - REVISE: it holds its round. The next round's delta goes via SendMessage to the same teammate (guard-protected as re-engage-pending).
