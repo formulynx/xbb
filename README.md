@@ -67,8 +67,12 @@ an invalid value rejects the whole call and keeps the previous settings.
   set it deliberately
 - Settings include which reviewer judges `--wang` rounds
   - `fable` by default, or `opus`/`sonnet`/`codex`
+  - `reviewerEffort` (default `medium`) for a Claude-identity reviewer
   - the `model` / `effort` / `timeouts` for the `codex` reviewer
   - `reviewMaxRounds`
+- `coder.model`/`coder.effort` (default `sonnet`/`high`) and
+  `researcher.model`/`researcher.effort` (default `sonnet`/`medium`) set the
+  model/effort for every `xbb-coder`/`xbb-researcher` spawn
 - Using `reviewer=codex` requires
   - Codex CLI: `npm install -g @openai/codex`, then `codex login`
   - agmsg: the messaging bridge to it, already set up

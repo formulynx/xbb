@@ -10,9 +10,10 @@
 #   xbb-admin.sh config get                 -> effective config JSON (defaults merged; creates the file)
 #   xbb-admin.sh config set <key>=<value>... -> validate all, then write; prints the new config
 #
-# Keys: reviewer, maxConcurrentAgents, reviewMaxRounds, handoffLeftRatio,
-#       codex.model, codex.effort, codex.pingTimeoutSec, codex.replyTimeoutSec,
-#       codex.tmuxLaunchMode
+# Keys: reviewer, reviewerEffort, maxConcurrentAgents, reviewMaxRounds,
+#       handoffLeftRatio, coder.model, coder.effort, researcher.model,
+#       researcher.effort, codex.model, codex.effort, codex.pingTimeoutSec,
+#       codex.replyTimeoutSec, codex.tmuxLaunchMode
 # Any invalid assignment rejects the whole `set` (exit 1, file untouched).
 # `reviewer=codex` additionally runs codex-reviewer.sh preflight before saving.
 set -euo pipefail
@@ -26,6 +27,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG="$HOME/.xbb/config.json"
 DEFAULTS='{
   "reviewer": "fable",
+  "reviewerEffort": "medium",
+  "coder": { "model": "sonnet", "effort": "high" },
+  "researcher": { "model": "sonnet", "effort": "medium" },
   "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300, "tmuxLaunchMode": "split-window" },
   "maxConcurrentAgents": 4,
   "reviewMaxRounds": 8,
@@ -71,12 +75,12 @@ validate() {
   case "$key" in
     reviewer)
       case "$val" in fable|opus|sonnet|codex) printf '"%s"' "$val" ;; *) echo "reviewer must be one of fable/opus/sonnet/codex (got '$val')" >&2; return 1 ;; esac ;;
-    codex.effort)
-      case "$val" in low|medium|high|xhigh) printf '"%s"' "$val" ;; *) echo "codex.effort must be one of low/medium/high/xhigh (got '$val')" >&2; return 1 ;; esac ;;
+    codex.effort|reviewerEffort|coder.effort|researcher.effort)
+      case "$val" in low|medium|high|xhigh) printf '"%s"' "$val" ;; *) echo "$key must be one of low/medium/high/xhigh (got '$val')" >&2; return 1 ;; esac ;;
     codex.tmuxLaunchMode)
       case "$val" in split-window|new-window) printf '"%s"' "$val" ;; *) echo "codex.tmuxLaunchMode must be split-window or new-window (got '$val')" >&2; return 1 ;; esac ;;
-    codex.model)
-      [ -n "$val" ] && printf '%s' "$val" | jq -R . || { echo "codex.model must be non-empty" >&2; return 1; } ;;
+    codex.model|coder.model|researcher.model)
+      [ -n "$val" ] && printf '%s' "$val" | jq -R . || { echo "$key must be non-empty" >&2; return 1; } ;;
     maxConcurrentAgents|reviewMaxRounds|codex.pingTimeoutSec|codex.replyTimeoutSec)
       case "$val" in ''|*[!0-9]*|0) echo "$key must be a positive integer (got '$val')" >&2; return 1 ;; *) printf '%s' "$val" ;; esac ;;
     handoffLeftRatio)

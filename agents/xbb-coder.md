@@ -1,8 +1,6 @@
 ---
 name: xbb-coder
 description: Implementation subagent for /xbb coding mode, spawned by the /xbb orchestrator.
-model: sonnet
-effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit, WebFetch, WebSearch, SendMessage
 ---
 

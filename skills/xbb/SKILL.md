@@ -28,6 +28,9 @@ Read it with `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config get`, which
 ```json
 {
   "reviewer": "fable",
+  "reviewerEffort": "medium",
+  "coder": { "model": "sonnet", "effort": "high" },
+  "researcher": { "model": "sonnet", "effort": "medium" },
   "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300, "tmuxLaunchMode": "split-window" },
   "maxConcurrentAgents": 4,
   "reviewMaxRounds": 8,
@@ -35,7 +38,7 @@ Read it with `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config get`, which
 }
 ```
 
-`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`. `maxConcurrentAgents` bounds the Concurrency guard (steps 4/5/7). `reviewMaxRounds`/`reviewer` bound the wang gate (step 7). `handoffLeftRatio` is the remaining-context ratio below which a teammate hands off (step 5's Context cap). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
+`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`; `reviewerEffort` is the thinking effort for a Claude-identity reviewer (unused on the `codex` path, which has its own `codex.effort`). `coder.model`/`coder.effort` and `researcher.model`/`researcher.effort` are the model/effort for every `xbb-coder`/`xbb-researcher` spawn — the sole source now that the agent frontmatter no longer sets them, so every spawn in step 4 must pass them explicitly. `maxConcurrentAgents` bounds the Concurrency guard (steps 4/5/7). `reviewMaxRounds`/`reviewer` bound the wang gate (step 7). `handoffLeftRatio` is the remaining-context ratio below which a teammate hands off (step 5's Context cap). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
 
 ## Concurrency guard (`maxConcurrentAgents`)
 
@@ -95,6 +98,7 @@ Apply the Concurrency guard, then spawn all independent teammates in one message
   - Give: request verbatim (or verified findings, mixed mode), task, write scope, report path, artifact form.
 
 #### Every prompt states
+- Every researcher/coder spawn overrides model and effort from config (`researcher.model`/`researcher.effort`, `coder.model`/`coder.effort`) — the agent frontmatter no longer sets either.
 - A one-line `[read-only]`/`[mutating]` completion criterion (coders: a verification command).
 - The SendMessage address for STATUS: `team-lead`, or this invocation's own name if it is itself spawned. Never `main`.
 - Any earlier report path this stage needs (round-2 reviewer, a fixer).
@@ -229,7 +233,7 @@ Proceed to step 8.
 
 #### Claude reviewer path
 `reviewer` ∈ fable/opus/sonnet.
-- Round 1: Concurrency guard, then spawn `xbbrv-$RUN_ID-01` as `xbb:xbb-reviewer` with the model overridden to the configured `reviewer`.
+- Round 1: Concurrency guard, then spawn `xbbrv-$RUN_ID-01` as `xbb:xbb-reviewer` with the model overridden to the configured `reviewer` and effort overridden to `reviewerEffort`.
   - Give: round input, report path, the full text of `references/reviewer-policy.md`, your teammate name.
   - It inspects the working tree itself (git diff, tests, etc.). You do not hand it a diff.
 - PASS: step 8 like any teammate.
@@ -290,6 +294,6 @@ Opt-in trim of run directories; temp root resolution matches step 3.
 
 Validation, codex preflight, and the write all live in `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config set <key>=<value>...`. It rejects the whole call on any invalid assignment (stderr names each one, file untouched, exit 1); when the new `reviewer` is `codex` it bootstraps agmsg from the plugin cache if missing and runs `codex-reviewer.sh preflight` before saving. On success it prints the saved config.
 
-1. **No args**: read the current values with `xbb-admin.sh config get`, then one AskUserQuestion call with Q1 "Reviewer" (`fable`/`opus`/`sonnet`/`codex`, current suffixed) and Q2 "Max agents" (`2`/`4`/`8`, current suffixed; "Other" free-text is automatic — never add your own Other option). If Q1 = `codex`, a second call: Q1 "Codex model" (`gpt-5.6-terra`/`gpt-5.6`), Q2 "Effort" (`low`/`medium`/`high`/`xhigh`). Apply the answers with one `config set` call.
+1. **No args**: read the current values with `xbb-admin.sh config get`, then one AskUserQuestion call with Q1 "Reviewer" (`fable`/`opus`/`sonnet`/`codex`, current suffixed) and Q2 "Max agents" (`2`/`4`/`8`, current suffixed; "Other" free-text is automatic — never add your own Other option). If Q1 ≠ `codex`, a second call: Q1 "Reviewer effort" (`low`/`medium`/`high`/`xhigh`, current suffixed). If Q1 = `codex`, a second call instead: Q1 "Codex model" (`gpt-5.6-terra`/`gpt-5.6`), Q2 "Effort" (`low`/`medium`/`high`/`xhigh`). A third call, always: Q1 "Coder effort" and Q2 "Researcher effort" (each `low`/`medium`/`high`/`xhigh`, current suffixed) — model overrides (`coder.model`/`researcher.model`) are `key=value`-only, not asked here. Apply the answers with one `config set` call.
 2. **With `key=value` args**: pass them verbatim to `config set`, no questions. Nested keys are dotted (`codex.effort=high`).
 3. **Report** the script's output: the saved config, or its stderr (which already carries the remediation, e.g. `codex login`) with the previous values kept.
