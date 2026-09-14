@@ -9,6 +9,9 @@
 #   xbb-admin.sh clean delete
 #   xbb-admin.sh config get                 -> effective config JSON (defaults merged; creates the file)
 #   xbb-admin.sh config set <key>=<value>... -> validate all, then write; prints the new config
+#   xbb-admin.sh config sync                -> fills missing keys, drops stale ones (written
+#                                               immediately), reports invalid values unchanged;
+#                                               prints {"added":[],"removed":[],"invalid":[],"config":{}}
 #
 # Keys: reviewer, reviewerEffort, maxConcurrentAgents, reviewMaxRounds,
 #       handoffLeftRatio, coder.model, coder.effort, researcher.model,
@@ -90,6 +93,48 @@ validate() {
   esac
 }
 
+leaf_paths() { jq -c '[paths(scalars) as $p | $p | join(".")]'; }
+
+config_sync() {
+  mkdir -p "$(dirname "$CONFIG")"
+  [ -f "$CONFIG" ] || printf '%s\n' "$DEFAULTS" > "$CONFIG"
+
+  local cur def_keys cur_keys added removed new k val out
+  cur="$(cat "$CONFIG")"
+  def_keys="$(leaf_paths <<<"$DEFAULTS")"
+  cur_keys="$(leaf_paths <<<"$cur")"
+  added="$(jq -cn --argjson a "$def_keys" --argjson b "$cur_keys" '$a - $b')"
+  removed="$(jq -cn --argjson a "$cur_keys" --argjson b "$def_keys" '$a - $b')"
+
+  new="$cur"
+  while IFS= read -r k; do
+    [ -z "$k" ] && continue
+    new="$(jq --argjson d "$DEFAULTS" --arg k "$k" \
+      'setpath($k | split("."); $d | getpath($k | split(".")))' <<<"$new")"
+  done < <(jq -r '.[]' <<<"$added")
+  while IFS= read -r k; do
+    [ -z "$k" ] && continue
+    new="$(jq --arg k "$k" 'delpaths([$k | split(".")])' <<<"$new")"
+  done < <(jq -r '.[]' <<<"$removed")
+  new="$(jq 'walk(if type == "object" then with_entries(select(.value != {})) else . end)' <<<"$new")"
+
+  if [ "$new" != "$cur" ]; then
+    printf '%s\n' "$new" > "$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
+  fi
+
+  local invalid="[]"
+  while IFS= read -r k; do
+    val="$(jq -r --arg k "$k" 'getpath($k | split("."))' <<<"$new")"
+    if ! out="$(validate "$k" "$val" 2>&1)"; then
+      invalid="$(jq -cn --argjson inv "$invalid" --arg k "$k" --arg v "$val" --arg r "$out" \
+        '$inv + [{key:$k, value:$v, reason:$r}]')"
+    fi
+  done < <(jq -r '.[]' <<<"$def_keys")
+
+  jq -n --argjson added "$added" --argjson removed "$removed" --argjson invalid "$invalid" --argjson config "$new" \
+    '{added:$added, removed:$removed, invalid:$invalid, config:$config}'
+}
+
 config_set() {
   [ $# -gt 0 ] || usage
   local new key val typed ok=1 assign
@@ -125,6 +170,7 @@ case "${1:-}" in
     case "${2:-}" in
       get) config_get ;;
       set) shift 2; config_set "$@" ;;
+      sync) config_sync ;;
       *) usage ;;
     esac ;;
   *) usage ;;

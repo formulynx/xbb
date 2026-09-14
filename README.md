@@ -58,6 +58,9 @@ No args for an interactive settings menu. With args, `key=value` pairs are
 validated and saved directly (`/xbb config reviewer=opus codex.effort=high`);
 an invalid value rejects the whole call and keeps the previous settings.
 - Stored in `~/.xbb/config.json`, created on first use and preserved across reinstalls
+- Every `/xbb` call, of any kind, syncs it first: missing keys get their
+  default, keys no longer in the schema get dropped, and an invalid value is
+  confirmed with you (default offered first) before being fixed
 - `maxConcurrentAgents` for parallelizations control
 - `handoffLeftRatio` (default 0.3, range 0.1–0.9): the remaining-context ratio
   below which a subagent hands off (measured from the subagent's own

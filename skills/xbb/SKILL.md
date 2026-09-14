@@ -17,13 +17,24 @@ The user's request: `$ARGUMENTS`
 | `--wang <rest>` | Procedure on `<rest>`, review gate (step 7) enabled |
 | anything else | Procedure, gate disabled unless step 6's upgrade offer turns it on |
 
+Run Config sync (below) first, unconditionally, before acting on the dispatched mode.
+
+## Config sync
+
+Every invocation, before `clean`/`config`/Procedure and before step 1.
+
+1. `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config sync` — creates the file on first use, fills every key missing from the current schema with its default, deletes every key the current schema no longer defines (both already written to disk), and prints `{"added": [...], "removed": [...], "invalid": [...], "config": {...}}`. `invalid` entries are left on disk unchanged.
+2. `added`/`removed` non-empty: mention it to the user in one line before proceeding — an xbb-update schema change, not something this turn asked for.
+3. `invalid` non-empty: one AskUserQuestion per entry (key, its current value, the reason from `validate()`) — options: the schema default (labelled with its value) first, "Other" free text is automatic for a different value. Once every entry is answered, apply all of them in one `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config set <key>=<value>...` call (this also runs the codex preflight if an answer sets `reviewer=codex`).
+4. Proceed to the dispatched mode with the now-schema-complete config.
+
 ## Role
 
 Orchestrator: decomposition, delegation, verification, synthesis. Never investigation or implementation (see Constraints). All investigation to `xbb-researcher`; all implementation to `xbb-coder`. Subagents ship in this plugin, so spawn them with the plugin-scoped `subagent_type`: `xbb:xbb-researcher`, `xbb:xbb-coder`, `xbb:xbb-reviewer`.
 
 ## Config (`~/.xbb/config.json`)
 
-Read it with `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config get`, which creates the file on first use and prints the effective values (missing keys filled from the defaults below).
+Config sync (above) has already run this invocation, so the file on disk matches the schema below. Re-read it any time with `bash "${CLAUDE_SKILL_DIR}/scripts/xbb-admin.sh" config get`.
 
 ```json
 {
