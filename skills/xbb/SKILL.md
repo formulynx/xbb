@@ -213,6 +213,7 @@ Only when the gate is enabled. Loop up to `reviewMaxRounds` rounds.
 - First round (fresh teammate or codex process): full input.
   - Canonical plan (or, for research, the report files).
   - Request verbatim, deviation disclosures, prior verdicts, `[mutating]`-criterion grader logs.
+  - The convention/constraint text this run applies (project and relevant global coding/doc conventions already loaded in the orchestrator's own session context, and any document/comment constraints named separately for this run), assembled by the orchestrator and handed over verbatim, the same discipline as `reviewer-policy.md` itself. Stable first-round input, not re-sent on delta rounds — same as `reviewer-policy.md` itself is not retyped every round for an already-briefed identity.
 - Same reviewer identity's later round: delta only. Name what changed, then the required work in this order:
   1. Re-run the Reviewer policy's full sweeps (as written in `references/reviewer-policy.md`) over the whole current diff (enumerable classes, content-type review with per-file line counts, propagation sweep) and report the results in Checked first.
   2. Re-verify each prior finding at its site.
@@ -222,9 +223,9 @@ Only when the gate is enabled. Loop up to `reviewMaxRounds` rounds.
 
 #### Reviewer policy and VERDICT protocol
 Both live in `references/reviewer-policy.md` and are given verbatim: `cat "${CLAUDE_SKILL_DIR}/references/reviewer-policy.md"` into the spawn prompt or round-1 file. Never paraphrase, trim, or retype them. Orchestrator-facing summary:
-- The reviewer judges only; conventions and house style are the grader's (step 6).
+- The grader (step 6) remains the primary, pre-review convention/scope/derived-artifact enforcer for every run, unconditionally. Additionally, the reviewer's own Phase B (defined in `reviewer-policy.md`) applies a secondary convention gate, using convention/constraint text the orchestrator supplies as part of the round input, that may downgrade an otherwise-passing content verdict.
 - The reviewer classifies each changed file by content type and reviews code, living documents, and point-in-time records by the criteria in the file.
-- The first line of a verdict is exactly `VERDICT: PASS` or `VERDICT: REVISE`; REVISE findings are numbered, file-referenced, tagged **implementation defect** or **plan defect**, and marked `[carried over from round N-1]` when repeated.
+- The first line of a verdict is exactly `VERDICT: PASS` or `VERDICT: REVISE`; REVISE findings are numbered, file-referenced, tagged **implementation defect**, **plan defect**, or **convention defect**, and marked `[carried over from round N-1]` when repeated.
 
 #### On PASS
 Proceed to step 8.
@@ -232,7 +233,8 @@ Proceed to step 8.
 #### On REVISE
 1. Show the user one status line (round number, finding counts by tag).
 2. Plan-defect findings escalate immediately, bypassing re-fanout. Apply step 5's escalation criterion and record the ruling as a neutralized plan-amendment disclosure.
-3. Implementation-defect findings become normal step-4 follow-up tasks (Concurrency guard applies).
+3. Implementation-defect and convention-defect findings become normal step-4 follow-up tasks (Concurrency guard applies).
+   - Convention-defect findings route identically to implementation-defect findings: normal step-4 follow-up, same round, same urgency, Concurrency guard applies. A single VERDICT may carry both implementation-defect and convention-defect findings; both are addressed together in the same follow-up fan-out, not sequenced or deprioritized relative to each other.
    - Re-engage the coder that owns the finding's write scope by SendMessage while it is still alive.
    - Once confirmed absent, spawn a fresh step-4 coder (continuing numbering), briefed with that coder's own prior report.
    - Verify via step 6.
