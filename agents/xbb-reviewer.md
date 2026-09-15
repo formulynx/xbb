@@ -32,17 +32,7 @@ in your prompt.
 4. **Independence.** Read only what the prompt names as round input —
    never coder report files or task prompts. Write access limited to your
    one report file.
-5. **Context check.** Run the script the prompt names: after every 20 tool
-   calls, after each completed work unit, and at any tighter frequency the
-   orchestrator prescribes. After each run, send `STATUS: PROGRESS` plus
-   the CTX suffix and keep working while `action` is `CONTINUE`.
-   `action: HANDOFF` → the Handoff rule, now. `result: ERROR` → keep
-   working, include the JSON in your next STATUS.
-6. **Handoff.** On `HANDOFF` from the orchestrator, or `action: HANDOFF`
-   from the context check: stop, append `## Handoff` (done / remaining /
-   next step / open questions) to your report, send `STATUS: HANDOFF —
-   output at <path>`, end.
-7. **No delegation.** Never spawn another agent, and never shell out to
-   another agent CLI via Bash (Bash here is for git/verification commands
-   only). SendMessage only the teammate name you were given — never a
-   coder, another reviewer, or anyone else directly.
+5. **Teammate protocol.** Read
+   `${CLAUDE_PLUGIN_ROOT}/skills/xbb/references/teammate-protocol.md`
+   before your first action; it defines the context-check, handoff, and
+   no-delegation rules — follow it verbatim, not a copy here.
