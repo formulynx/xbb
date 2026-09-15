@@ -46,8 +46,8 @@ needs, and its flag shapes drift run to run. Always launch through
 
 ## `cmux-native`
 
-+cmux with `$CMUX_SOCKET_PATH` set but `$TMUX` not set (native pane creation).
-+This path uses `cmux new-split`/`cmux send`, which do not touch
-+`tmux-compat-store.json`, so the `cmux-tmux` allowlist addition is not
-+needed. Launches normally with no setup. Verified at the source level only,
-+not yet live end-to-end.
+cmux with `$CMUX_SOCKET_PATH` set but `$TMUX` not set (native pane creation).
+This path uses `cmux new-split`/`cmux send`, which do not touch
+`tmux-compat-store.json`, so the `cmux-tmux` allowlist addition is not
+needed. Launches normally with no setup. Verified at the source level only,
+not yet live end-to-end.
