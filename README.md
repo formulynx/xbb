@@ -68,6 +68,10 @@ an invalid value rejects the whole call and keeps the previous settings.
   its handoff report. The reading lags one API call, so a very low value
   (e.g. 0.1) leaves little margin against a single large tool result —
   set it deliberately
+- `pushNotify` (default `true`): one mobile push (via Claude Code's
+  `PushNotification`, delivered only when Remote Control is connected and you
+  are away from the terminal) when a run completes, stops for your input, or
+  hits a mid-run event worth knowing immediately
 - Settings include which reviewer judges `--wang` rounds
   - `fable` by default, or `opus`/`sonnet`/`codex`
   - `reviewerEffort` (default `medium`) for a Claude-identity reviewer

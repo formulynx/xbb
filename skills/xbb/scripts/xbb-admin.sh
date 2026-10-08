@@ -16,7 +16,7 @@
 # Keys: reviewer, reviewerEffort, maxConcurrentAgents, reviewMaxRounds,
 #       handoffLeftRatio, coder.model, coder.effort, researcher.model,
 #       researcher.effort, codex.model, codex.effort, codex.pingTimeoutSec,
-#       codex.replyTimeoutSec, codex.tmuxLaunchMode
+#       codex.replyTimeoutSec, codex.tmuxLaunchMode, pushNotify
 # Any invalid assignment rejects the whole `set` (exit 1, file untouched).
 # `reviewer=codex` additionally runs codex-reviewer.sh preflight before saving.
 set -euo pipefail
@@ -36,7 +36,8 @@ DEFAULTS='{
   "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300, "tmuxLaunchMode": "split-window" },
   "maxConcurrentAgents": 4,
   "reviewMaxRounds": 8,
-  "handoffLeftRatio": 0.3
+  "handoffLeftRatio": 0.3,
+  "pushNotify": true
 }'
 
 # --- clean ---------------------------------------------------------------
@@ -86,6 +87,8 @@ validate() {
       [ -n "$val" ] && printf '%s' "$val" | jq -R . || { echo "$key must be non-empty" >&2; return 1; } ;;
     maxConcurrentAgents|reviewMaxRounds|codex.pingTimeoutSec|codex.replyTimeoutSec)
       case "$val" in ''|*[!0-9]*|0) echo "$key must be a positive integer (got '$val')" >&2; return 1 ;; *) printf '%s' "$val" ;; esac ;;
+    pushNotify)
+      case "$val" in true|false) printf '%s' "$val" ;; *) echo "pushNotify must be true or false (got '$val')" >&2; return 1 ;; esac ;;
     handoffLeftRatio)
       awk -v v="$val" 'BEGIN { exit !(v ~ /^[0-9]+(\.[0-9]+)?$/ && v + 0 >= 0.1 && v + 0 <= 0.9) }' \
         && printf '%s' "$val" || { echo "handoffLeftRatio must be a number in 0.1-0.9 (got '$val')" >&2; return 1; } ;;

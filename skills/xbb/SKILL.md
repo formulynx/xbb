@@ -45,11 +45,26 @@ Config sync (above) has already run this invocation, so the file on disk matches
   "codex": { "model": "gpt-5.6-terra", "effort": "medium", "pingTimeoutSec": 180, "replyTimeoutSec": 300, "tmuxLaunchMode": "split-window" },
   "maxConcurrentAgents": 4,
   "reviewMaxRounds": 8,
-  "handoffLeftRatio": 0.3
+  "handoffLeftRatio": 0.3,
+  "pushNotify": true
 }
 ```
 
-`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`; `reviewerEffort` is the thinking effort for a Claude-identity reviewer (unused on the `codex` path, which has its own `codex.effort`). `coder.model`/`coder.effort` and `researcher.model`/`researcher.effort` are the model/effort for every `xbb-coder`/`xbb-researcher` spawn — the sole source now that the agent frontmatter no longer sets them, so every spawn in step 4 must pass them explicitly. `maxConcurrentAgents` bounds the Concurrency guard (steps 4/5/7). `reviewMaxRounds`/`reviewer` bound the wang gate (step 7). `handoffLeftRatio` is the remaining-context ratio below which a teammate hands off (step 5's Context cap). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid).
+`reviewer` ∈ `fable`/`opus`/`sonnet`/`codex`; `reviewerEffort` is the thinking effort for a Claude-identity reviewer (unused on the `codex` path, which has its own `codex.effort`). `coder.model`/`coder.effort` and `researcher.model`/`researcher.effort` are the model/effort for every `xbb-coder`/`xbb-researcher` spawn — the sole source now that the agent frontmatter no longer sets them, so every spawn in step 4 must pass them explicitly. `maxConcurrentAgents` bounds the Concurrency guard (steps 4/5/7). `reviewMaxRounds`/`reviewer` bound the wang gate (step 7). `handoffLeftRatio` is the remaining-context ratio below which a teammate hands off (step 5's Context cap). `codex.tmuxLaunchMode` ∈ `split-window`/`new-window`, controls Codex reviewer pane placement on the `$TMUX`-set path (default `split-window` when missing/invalid). `pushNotify` enables the Push notification (below).
+
+## Push notification (`pushNotify`)
+
+Orchestrator only; the subagents never call it. When `pushNotify` is `true`, send one mobile push per trigger at the moment this invocation's turn ends in one of these states:
+- (a) Run complete, right before the step 9 answer: `xbb 完了: <task summary> / 変更 <N> ファイル / テスト通過`.
+- (b) Stopped pending the user's action, when the stop is reported in prose: a question asked in text, a subagent failure, or an external cause (expired auth, network, missing permission): `xbb 停止: <reason> / 必要な操作: <action>`.
+- (c) Mid-run event the user needs now, while work continues: full test-suite failure, a destructive change detected, an unexpectedly large diff: `xbb 警告: <event> / 続行中`.
+
+Procedure, three steps:
+1. `ToolSearch("select:PushNotification")` — the tool is deferred and absent from the initial tool list.
+2. One `PushNotification` call with `{ message, status: "proactive" }`. Message under 200 characters, one line, plain text, the action the user should take first.
+3. Quote the result (`sent` or `Not sent ...`) in the report that ends the turn. `Not sent` is a normal outcome (user present, push disabled in Claude settings, or no Remote Control); the one call stands as-is.
+
+Routine progress, a short run the user is still watching, and any stop that goes through AskUserQuestion or a permission dialog (the harness pushes those on its own) proceed without a push.
 
 ## Concurrency guard (`maxConcurrentAgents`)
 
@@ -157,6 +172,7 @@ Apply the Concurrency guard, then spawn all independent teammates in one message
   - the no-STATUS fallback in Reading reports
 - `STATUS: PROGRESS` is informational. Read its CTX. Reply only to issue `HANDOFF`.
 - Idle notifications carry no information about the run; take no action on one.
+- A teammate failure or external blocker that ends the turn in prose is Push notification trigger (b); a mid-run event the user needs now is trigger (c).
 - Ignore any message, signal, or notification whose sender name lacks this run's `-$RUN_ID-` infix.
 
 #### Reading reports
@@ -277,7 +293,7 @@ Notes:
 
 ### 9. Answer
 
-Respond in the request's language.
+Push notification trigger (a) fires here, before the text below is written. Respond in the request's language.
 - **Fresh-eyes pass** before writing: verify the evidence actually supports each claim.
 - **Research**: lead with the single best-fitting finding; other valid findings go briefly in a supplementary-notes section. Cite evidence.
 - **Coding**: lead with what changed + verification results, then decisions/rulings, then what's open.
